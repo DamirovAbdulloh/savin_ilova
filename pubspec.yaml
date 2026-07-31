@@ -1,0 +1,91 @@
+name: savin_app
+description: "Savin — chegirmalar va lokal bizneslar uchun mobile ilova"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Networking
+  dio: ^5.4.3+1
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Secure storage for JWT tokens
+  flutter_secure_storage: ^9.2.2
+
+  # Routing
+  go_router: ^14.2.0
+
+  # UI helpers
+  google_fonts: ^6.2.1
+  pin_code_fields: ^8.0.1
+  qr_flutter: ^4.1.0
+  fl_chart: ^0.68.0
+  intl: ^0.19.0
+  shimmer: ^3.0.0
+
+  # Brend logotipi (SVG) — bosh sahifa va onboardingda ishlatiladi
+  flutter_svg: ^2.0.10
+
+  # Tashqi havolalar: telefon, email, Telegram/WhatsApp ulashish
+  url_launcher: ^6.3.0
+
+  # Profil rasmini galereyadan tanlash uchun
+  image_picker: ^1.1.2
+
+  # Foydalanuvchining haqiqiy joylashuvi (xarita/masofa hisoblari uchun)
+  geolocator: ^13.0.1
+
+  # Til va bildirishnoma sozlamalarini ilova qayta ochilganda ham
+  # saqlab qolish uchun (oldin faqat xotirada edi)
+  shared_preferences: ^2.3.2
+
+  # Xarita — OpenStreetMap tile'lari orqali HAQIQIY ko'chalar, bino nomlari
+  # va foydalanuvchi joylashuvi ko'rsatiladi. Google Maps API kaliti TALAB
+  # QILINMAYDI (bepul), shu sabab ilgari yaroqsiz kalit tufayli xarita
+  # ochilganda ilova qulab tushayotgan xato ham bartaraf bo'ldi.
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+  # Play Store/App Store uchun ilova ikonkasini avtomatik generatsiya qilish
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo/
+
+# Ilova ikonkasi — 3-rasmdagi Savin belgisi (to'q yashil fon + och yashil logo).
+# `dart run flutter_launcher_icons` barcha platformalar uchun generatsiya qiladi.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/logo/app_icon.png"
+  adaptive_icon_background: "#0B2D06"
+  adaptive_icon_foreground: "assets/logo/app_icon_foreground.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/logo/app_icon.png"
+    background_color: "#0B2D06"
+    theme_color: "#0B2D06"
+  windows:
+    generate: true
+    image_path: "assets/logo/app_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/logo/app_icon.png"
