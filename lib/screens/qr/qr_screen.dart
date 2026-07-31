@@ -1,6 +1,7 @@
 ﻿import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
@@ -51,6 +52,30 @@ class _QrScreenState extends State<QrScreen> {
 
   static String _generateQrData(AppUser? user) =>
       'SAVIN-USER-${user?.id ?? 'guest'}-${DateTime.now().millisecondsSinceEpoch}';
+
+  /// QR skanerlanmasa kassir qo'lda kiritadigan kod — telefon raqami.
+  /// Backend uni ham qabul qiladi (UUID/email bilan bir qatorda).
+  String get _manualCode {
+    final phone = _user?.phoneNumber ?? '';
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 9) return phone.isEmpty ? '—' : phone;
+    final d = digits.substring(digits.length - 9);
+    return '+998 ${d.substring(0, 2)} ${d.substring(2, 5)} '
+        '${d.substring(5, 7)} ${d.substring(7, 9)}';
+  }
+
+  Future<void> _copyManualCode() async {
+    final code = _manualCode;
+    if (code == '—') return;
+    await Clipboard.setData(ClipboardData(text: code));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocale.instance.t('qr_manual_copied')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -342,19 +367,46 @@ class _QrScreenState extends State<QrScreen> {
                 if (!_isLocked && _loadedOnce)
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 280),
+                    // QR skanerlanmasa kassir shu kodni qo'lda kiritadi
                     child: Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: TextButton.icon(
-                        onPressed: _redeeming ? null : _confirmDemoRedeem,
-                        icon: _redeeming
-                            ? const SizedBox(
-                                width: 14, height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white54))
-                            : const Icon(Icons.play_circle_outline,
-                                color: Colors.white54, size: 16),
-                        label: Text(loc.t('qr_demo_check'),
-                            style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
+                      child: Column(
+                        children: [
+                          Text(
+                            loc.t('qr_manual_hint'),
+                            style: const TextStyle(color: Colors.white54, fontSize: 11.5),
+                          ),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: _copyManualCode,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _manualCode,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.5,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.copy_rounded,
+                                      color: Colors.white54, size: 15),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
