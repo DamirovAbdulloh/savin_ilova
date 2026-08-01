@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -18,8 +20,9 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   Widget build(BuildContext context) {
     final loc = AppLocale.instance;
     final master = _prefs.masterEnabled;
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: Text(loc.t('profile_notifications'))),
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
+      appBar: AppBar(leading: BackButton(), title: Text(loc.t('profile_notifications'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -125,6 +128,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
           ],
         ),
       ),
+    ),
     );
   }
 

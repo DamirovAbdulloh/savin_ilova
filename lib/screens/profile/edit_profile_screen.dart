@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -116,12 +118,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final initial =
         _firstName.text.isNotEmpty ? _firstName.text[0].toUpperCase() : 'S';
 
-    return Scaffold(
+    return LocaleBuilder(
+
+      builder: (context, loc) => Scaffold(
       appBar: AppBar(
         leading: BackButton(
           onPressed: () => Navigator.of(context).pop(_avatarChanged),
         ),
-        title: const Text('Profilni tahrirlash'),
+        title: Text(loc.t('edit_profile_title')),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
@@ -227,7 +231,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Telefon', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text(loc.t('edit_phone'), style: TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -276,6 +280,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -146,46 +146,6 @@ class _QrScreenState extends State<QrScreen> {
     if (_offline) _loadUser();
   }
 
-  /// "Namuna: chegirmani tekshirish" вЂ” MUHIM: kassa integratsiyasi hali
-  /// yo'q (haqiqiy do'kon terminali bu ilovaga ulanmagan), shuning uchun
-  /// qaysi biznesda va qancha summaga xarid qilingani hali kassadan
-  /// avtomatik kelmaydi вЂ” asl summa demo sifatida olinadi. LEKIN endi bu
-  /// haqiqiy backendga POST qilinadi va Hamyon tarixida chindan ham
-  /// ko'rinadi (ilgari butunlay mahalliy/soxta edi).
-  Future<void> _confirmDemoRedeem() async {
-    if (_redeeming) return;
-    setState(() => _redeeming = true);
-    try {
-      final businesses = await CatalogService.instance.fetchBusinesses();
-      final biz = businesses.isNotEmpty
-          ? businesses[Random().nextInt(businesses.length)]
-          : null;
-      const demoOriginalAmount = 50000;
-      final tx = await WalletService.instance.redeem(
-        businessId: biz?.id,
-        businessName: biz?.name ?? 'Fresh Cut Barber',
-        categoryName: biz?.categoryName ?? 'Barber',
-        district: biz?.district ?? '',
-        discountPercent: biz?.discountPercent ?? 35,
-        originalAmount: demoOriginalAmount,
-      );
-      if (!mounted) return;
-      setState(() {
-        _lastRedeem = tx;
-        _showSuccess = true;
-        _redeeming = false;
-      });
-    } catch (_) {
-      // Server bilan bog'lanib bo'lmasa ham demo animatsiya ko'rsatiladi вЂ”
-      // faqat bu holatda Hamyon tarixiga yozilmaydi (chunki internet yo'q).
-      if (!mounted) return;
-      setState(() {
-        _lastRedeem = null;
-        _showSuccess = true;
-        _redeeming = false;
-      });
-    }
-  }
 
   String get _formattedTime {
     final m = _secondsLeft ~/ 60;

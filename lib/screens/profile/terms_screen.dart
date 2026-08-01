@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 
@@ -40,8 +42,9 @@ class TermsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: const Text('Foydalanish shartlari')),
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
+      appBar: AppBar(leading: BackButton(), title: Text(loc.t('terms_title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -53,10 +56,10 @@ class TermsScreen extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Versiya 1.2',
+                    Text(loc.t('terms_version'),
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                     SizedBox(height: 2),
                     Text("18-may 2026 · O'zbekcha",
@@ -103,6 +106,7 @@ class TermsScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

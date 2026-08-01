@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/i18n/app_strings.dart';
@@ -106,7 +108,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocale.instance;
-    return Scaffold(
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
         title: Text(loc.t('ref_title')),
@@ -286,6 +289,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

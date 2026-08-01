@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -80,7 +82,9 @@ class _PremiumInfoScreenState extends State<PremiumInfoScreen> {
     final loc = AppLocale.instance;
     final isPremium = widget.user?.isPremium == true;
 
-    return Scaffold(
+    return LocaleBuilder(
+
+      builder: (context, loc) => Scaffold(
       appBar: AppBar(leading: const BackButton(), title: const Text('Premium membership')),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -264,6 +268,7 @@ class _PremiumInfoScreenState extends State<PremiumInfoScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

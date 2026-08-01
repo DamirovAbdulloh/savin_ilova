@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -27,7 +29,8 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
       appBar: AppBar(leading: const BackButton(), title: Text(AppLocale.instance.t('lang_title'))),
       body: SafeArea(
         child: Padding(
@@ -136,6 +139,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

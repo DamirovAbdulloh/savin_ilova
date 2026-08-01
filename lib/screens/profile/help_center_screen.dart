@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -51,8 +53,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: const Text('Yordam markazi')),
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
+      appBar: AppBar(leading: BackButton(), title: Text(loc.t('help_title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -171,6 +174,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/i18n/locale_builder.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
@@ -16,8 +18,9 @@ class AboutAppScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: const Text('Ilova haqida')),
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
+      appBar: AppBar(leading: BackButton(), title: Text(loc.t('about_title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -103,7 +106,7 @@ class AboutAppScreen extends StatelessWidget {
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Foydalanish shartlari'),
+                    title: Text(loc.t('about_terms')),
                     trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                     onTap: () => Navigator.of(context).push(
                         AppPageRoute(page: const TermsScreen())),
@@ -113,7 +116,7 @@ class AboutAppScreen extends StatelessWidget {
                   // Matn tayyor bo'lgach, TermsScreen kabi ekran qo'shiladi.
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Litsenziyalar'),
+                    title: Text(loc.t('about_licenses')),
                     trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                     onTap: () => showLicensePage(
                       context: context,
@@ -129,13 +132,14 @@ class AboutAppScreen extends StatelessWidget {
               child: Text('© 2026 Savin Tech LLC',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
             ),
-            const Center(
-              child: Text('Made with 💚 in Tashkent',
+            Center(
+              child: Text(loc.t('about_made'),
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 }
