@@ -51,6 +51,9 @@ class _AuthPhoneScreenState extends State<AuthPhoneScreen> {
         AppPageRoute(
           page: AuthOtpScreen(
             phoneNumber: fullPhone,
+            // Kodni qayta yuborishda ham shu ma'lumotlar kerak bo'ladi
+            firstName: widget.firstName,
+            lastName: widget.lastName,
             devCode: result['dev_otp'] as String?,
           ),
         ),

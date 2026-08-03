@@ -43,4 +43,7 @@ class ApiConstants {
   // Referal mukofot so'rovi
   static const String referralRequest = '/referral/request/';
   static const String referralStatus = '/referral/status/';
+
+  // Kassaga aytiladigan 4 xonali kod (QR o'rniga) — har 5 daqiqada yangilanadi
+  static const String redeemCode = '/redeem-code/';
 }

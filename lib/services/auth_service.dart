@@ -7,7 +7,25 @@ import '../models/user.dart';
 
 class AuthException implements Exception {
   final String message;
-  AuthException(this.message);
+
+  /// Server javobining HTTP kodi (tarmoq xatosida `null`).
+  /// UI shu orqali "kod noto'g'ri" (400) ni "internet yo'q" dan ajratadi —
+  /// aks holda aloqa uzilishi ham noto'g'ri kod deb hisoblanardi.
+  final int? statusCode;
+
+  /// Javob tanasi — masalan 429 da `retry_after` (soniya) shu yerda keladi.
+  final Map<String, dynamic>? data;
+
+  AuthException(this.message, {this.statusCode, this.data});
+
+  /// Kodni qayta yuborishgacha kutish kerak bo'lgan soniya (429 javobida).
+  int? get retryAfter {
+    final value = data?['retry_after'];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('${value ?? ''}');
+  }
+
   @override
   String toString() => message;
 }
@@ -36,7 +54,7 @@ class AuthService {
       });
       return (response.data as Map<String, dynamic>?) ?? <String, dynamic>{};
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
@@ -56,7 +74,7 @@ class AuthService {
 
       return AppUser.fromJson(response.data['user'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
@@ -65,12 +83,24 @@ class AuthService {
       final response = await _dio.get(ApiConstants.me);
       return AppUser.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
   Future<void> logout() async {
     await TokenStorage.instance.clear();
+  }
+
+  /// Kassaga QR o'rniga aytiladigan joriy 4 xonali kod. Backend har 5 daqiqada
+  /// yangilaydi. Xato bo'lsa `null` qaytadi (ekran shunda "····" ko'rsatadi).
+  Future<String?> fetchRedeemCode() async {
+    try {
+      final response = await _dio.get(ApiConstants.redeemCode);
+      final data = response.data as Map<String, dynamic>?;
+      return data?['code'] as String?;
+    } on DioException {
+      return null;
+    }
   }
 
   /// Premium a'zolikni faollashtirish/uzaytirish (TEST/DEMO — haqiqiy to'lov
@@ -83,7 +113,7 @@ class AuthService {
       final data = response.data as Map<String, dynamic>;
       return AppUser.fromJson(data['user'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
@@ -101,7 +131,7 @@ class AuthService {
       });
       return AppUser.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
@@ -125,7 +155,7 @@ class AuthService {
       );
       return AppUser.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     }
   }
 
@@ -136,10 +166,19 @@ class AuthService {
     try {
       await _dio.delete(ApiConstants.me);
     } on DioException catch (e) {
-      throw AuthException(_extractError(e));
+      throw _toAuthException(e);
     } finally {
       await TokenStorage.instance.clear();
     }
+  }
+
+  AuthException _toAuthException(DioException e) {
+    final data = e.response?.data;
+    return AuthException(
+      _extractError(e),
+      statusCode: e.response?.statusCode,
+      data: data is Map ? Map<String, dynamic>.from(data) : null,
+    );
   }
 
   String _extractError(DioException e) {

@@ -43,6 +43,8 @@ class _QrScreenState extends State<QrScreen> {
   int _secondsLeft = _validitySeconds;
   AppUser? _user;
   String _qrData = _generateQrData(null);
+  // Kassaga QR o'rniga aytiladigan 4 xonali kod (backend, har 5 daqiqada).
+  String? _redeemCode;
   bool _offline = false;
   bool _loadedOnce = false;
   bool _showSuccess = false;
@@ -53,20 +55,26 @@ class _QrScreenState extends State<QrScreen> {
   static String _generateQrData(AppUser? user) =>
       'SAVIN-USER-${user?.id ?? 'guest'}-${DateTime.now().millisecondsSinceEpoch}';
 
-  /// QR skanerlanmasa kassir qo'lda kiritadigan kod — telefon raqami.
+  /// QR skanerlanmasa kassir qo'lda kiritadigan kod — 4 xonali, har 5 daqiqada
+  /// yangilanadi (telefon raqami o'rniga: maxfiyroq va vaqtincha amal qiladi).
   /// Backend uni ham qabul qiladi (UUID/email bilan bir qatorda).
   String get _manualCode {
-    final phone = _user?.phoneNumber ?? '';
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 9) return phone.isEmpty ? '—' : phone;
-    final d = digits.substring(digits.length - 9);
-    return '+998 ${d.substring(0, 2)} ${d.substring(2, 5)} '
-        '${d.substring(5, 7)} ${d.substring(7, 9)}';
+    final code = _redeemCode;
+    if (code == null || code.isEmpty) return '····';
+    // "1234" -> "1 2 3 4" (o'qish oson bo'lsin)
+    return code.split('').join(' ');
+  }
+
+  /// Backenddan joriy 4 xonali kodni oladi.
+  Future<void> _refreshRedeemCode() async {
+    final code = await AuthService.instance.fetchRedeemCode();
+    if (!mounted) return;
+    setState(() => _redeemCode = code);
   }
 
   Future<void> _copyManualCode() async {
-    final code = _manualCode;
-    if (code == '—') return;
+    final code = _redeemCode;
+    if (code == null || code.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: code));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +108,8 @@ class _QrScreenState extends State<QrScreen> {
         _offline = false;
         _loadedOnce = true;
       });
+      // Kassaga aytiladigan 4 xonali kodni ham olamiz
+      _refreshRedeemCode();
       // Hamyon statistikasi ixtiyoriy вЂ” muvaffaqiyatsiz bo'lsa ham QR
       // ekranining asosiy ishlashiga ta'sir qilmasin.
       try {
@@ -128,6 +138,8 @@ class _QrScreenState extends State<QrScreen> {
           _qrData = _generateQrData(_user);
           _secondsLeft = _validitySeconds;
         });
+        // Kod ham serverda yangilandi — yangisini olamiz
+        if (_user != null) _refreshRedeemCode();
         // Vaqti-vaqti bilan tarmoqni qayta tekshiramiz вЂ” internet qaytgan
         // bo'lishi mumkin.
         if (_offline) _loadUser();
@@ -143,6 +155,7 @@ class _QrScreenState extends State<QrScreen> {
       _secondsLeft = _validitySeconds;
     });
     _startTimer();
+    if (_user != null) _refreshRedeemCode();
     if (_offline) _loadUser();
   }
 

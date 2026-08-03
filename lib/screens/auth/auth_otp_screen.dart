@@ -12,9 +12,16 @@ class AuthOtpScreen extends StatefulWidget {
   /// Haqiqiy rejimda `null` bo'ladi (kod faqat SMS orqali keladi).
   final String? devCode;
 
+  /// Kodni QAYTA yuborish uchun kerak — backend `/auth/register/` endpointi
+  /// ism-familiyani ham kutadi (u yerda foydalanuvchi yaratiladi/yangilanadi).
+  final String firstName;
+  final String lastName;
+
   const AuthOtpScreen({
     super.key,
     required this.phoneNumber,
+    required this.firstName,
+    this.lastName = '',
     this.devCode,
   });
 
@@ -25,14 +32,21 @@ class AuthOtpScreen extends StatefulWidget {
 class _AuthOtpScreenState extends State<AuthOtpScreen> {
   static const _blockDurationSeconds = 5 * 60; // 5 daqiqa blok
 
+  /// Backenddagi `PhoneOtp.RESEND_COOLDOWN_SECONDS` bilan bir xil.
+  /// Ilgari bu yerda 42 turardi — hisoblagich tugagach bosilgan "qayta
+  /// yuborish" server tomonidan 429 bilan rad etilardi.
+  static const _resendCooldownSeconds = 60;
+
   String _code = '';
   final TextEditingController _codeController = TextEditingController();
   bool _loading = false;
+  bool _resending = false;
   bool _blocked = false;
   int _attemptsLeft = 3;
   String? _error;
+  String? _devCode;
   Timer? _timer;
-  int _secondsLeft = 42;
+  int _secondsLeft = _resendCooldownSeconds;
   Timer? _blockTimer;
   int _blockSecondsLeft = _blockDurationSeconds;
 
@@ -43,23 +57,74 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
     // Test rejimida kodni avtomatik to'ldiramiz — SMS kelmaydi, shuning
     // uchun uni qo'lda topib yozishga hojat qolmaydi. Controller orqali
     // yozilmasa kod faqat o'zgaruvchida qolib, ekranda bo'sh ko'rinadi.
-    final dev = widget.devCode;
+    _devCode = widget.devCode;
+    final dev = _devCode;
     if (dev != null && dev.isNotEmpty) {
       _code = dev;
       _codeController.text = dev;
     }
   }
 
-  void _startResendTimer() {
-    _secondsLeft = 42;
+  void _startResendTimer([int seconds = _resendCooldownSeconds]) {
+    _secondsLeft = seconds;
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_secondsLeft == 0) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (_secondsLeft <= 0) {
         t.cancel();
       } else {
         setState(() => _secondsLeft--);
       }
     });
+  }
+
+  /// Kodni qayta yuborish — backendga HAQIQIY so'rov.
+  ///
+  /// Ilgari bu tugma faqat mahalliy hisoblagichni qayta ishga tushirardi:
+  /// SMS kelmagan foydalanuvchi yangi kod ololmay, ro'yxatdan o'tish shu
+  /// yerda tugab qolardi.
+  Future<void> _resend() async {
+    if (_resending || _secondsLeft > 0) return;
+    setState(() {
+      _resending = true;
+      _error = null;
+    });
+    try {
+      final result = await AuthService.instance.register(
+        firstName: widget.firstName,
+        lastName: widget.lastName,
+        phoneNumber: widget.phoneNumber,
+      );
+      if (!mounted) return;
+
+      final dev = result['dev_otp'] as String?;
+      setState(() {
+        _devCode = dev;
+        _attemptsLeft = 3;
+        if (dev != null && dev.isNotEmpty) {
+          _code = dev;
+          _codeController.text = dev;
+        } else {
+          _code = '';
+          _codeController.clear();
+        }
+      });
+      _startResendTimer((result['resend_after'] as num?)?.toInt() ?? _resendCooldownSeconds);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yangi kod yuborildi')),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      // 429 — juda tez so'raldi: server qancha kutish kerakligini aytadi
+      final wait = e.retryAfter;
+      if (wait != null && wait > 0) _startResendTimer(wait);
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
   }
 
   void _startBlockTimer() {
@@ -82,6 +147,14 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
     });
   }
 
+  /// "1:05" ko'rinishi. Ilgari matnda "0:" qotirilgan edi va 60 soniyalik
+  /// oraliq "0:60" bo'lib chiqardi.
+  String _formatWait(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
   String get _blockTimeFormatted {
     final m = _blockSecondsLeft ~/ 60;
     final s = _blockSecondsLeft % 60;
@@ -102,12 +175,21 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
         (route) => false,
       );
     } on AuthException catch (e) {
+      if (!mounted) return;
+      // Urinish faqat server kodni RAD ETGANDA sarflanadi (HTTP 400).
+      // Ilgari internet uzilishi yoki 404 ham urinish deb hisoblanib,
+      // uch marta uzilishdan keyin foydalanuvchi 5 daqiqaga bloklanardi.
+      final rejectedCode = e.statusCode == 400;
       setState(() {
-        _attemptsLeft -= 1;
-        if (_attemptsLeft <= 0) {
-          _blocked = true;
+        if (rejectedCode) {
+          _attemptsLeft -= 1;
+          if (_attemptsLeft <= 0) {
+            _blocked = true;
+          } else {
+            _error = '${e.message} Qolgan urinish: $_attemptsLeft ta.';
+          }
         } else {
-          _error = '${e.message} Qolgan urinish: $_attemptsLeft ta.';
+          _error = e.message;
         }
       });
       if (_blocked) {
@@ -210,7 +292,7 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
                 ),
               ),
               // Test rejimi: SMS xizmati ulanmagan, kod avtomatik to'ldirilgan
-              if (widget.devCode != null && widget.devCode!.isNotEmpty) ...[
+              if (_devCode != null && _devCode!.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -218,10 +300,10 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Test rejimi: SMS xizmati hali ulanmagan, kod avtomatik '
                     "to'ldirildi. Davom etish uchun tugmani bosing.",
-                    style: const TextStyle(color: AppColors.primary, fontSize: 12),
+                    style: TextStyle(color: AppColors.primary, fontSize: 12),
                   ),
                 ),
               ],
@@ -232,12 +314,16 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
-                  onPressed: _secondsLeft == 0 ? _startResendTimer : null,
-                  child: Text(
-                    _secondsLeft == 0
-                        ? 'Kodni qayta yuborish'
-                        : "Kod kelmadimi? Qayta yuborish (0:${_secondsLeft.toString().padLeft(2, '0')})",
-                  ),
+                  onPressed: (_secondsLeft == 0 && !_resending) ? _resend : null,
+                  child: _resending
+                      ? const SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(
+                          _secondsLeft == 0
+                              ? 'Kodni qayta yuborish'
+                              : "Kod kelmadimi? Qayta yuborish (${_formatWait(_secondsLeft)})",
+                        ),
                 ),
               ),
               const Spacer(),
