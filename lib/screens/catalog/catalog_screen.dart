@@ -6,7 +6,7 @@ import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../services/catalog_service.dart';
 import '../../services/providers.dart';
-import '../map/map_screen.dart';
+import 'business_detail_screen.dart';
 
 /// Katalog: Figma'dagi kabi — kategoriyalar to'ri (grid, foizlar bilan)
 /// va tanlangan kategoriya bo'yicha bizneslar ro'yxati.
@@ -197,10 +197,10 @@ class _BizRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressableScale(
-      // TODO: biznes tafsilot ekrani hali yaratilmagan — hozircha xaritada
-      // SHU do'konga markazlashib ko'rsatamiz (foydalanuvchi joylashuviga emas).
+      // Biznes tafsiloti (dizayndagi "Biznes karta — Detail"): tavsif,
+      // xizmatlar, manzil, yo'l ko'rsatish va "QR ko'rsatish".
       onTap: () => Navigator.of(context)
-          .push(AppPageRoute(page: MapScreen(focusBusiness: business))),
+          .push(AppPageRoute(page: BusinessDetailScreen(business: business))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),

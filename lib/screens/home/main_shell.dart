@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../services/providers.dart';
+import '../../services/referral_service.dart';
 import '../home/home_screen.dart';
 import '../catalog/catalog_screen.dart';
 import '../qr/qr_screen.dart';
@@ -16,7 +17,7 @@ class MainShell extends ConsumerStatefulWidget {
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserver {
   final _screens = const [
     HomeScreen(),
     CatalogScreen(),
@@ -29,10 +30,25 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     AppLocale.instance.addListener(_onLocaleChanged);
+    WidgetsBinding.instance.addObserver(this);
+    // Ilova ochilganda "men faolman" signali — taklif qilgan do'stning
+    // 7 kunlik hisobiga kun qo'shiladi (kunига bir marta).
+    ReferralService.instance.ping();
+    ReferralService.instance.load();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Ilova fondan qaytganda ham faollik belgilanadi — foydalanuvchi
+    // ilovani qayta ishga tushirishi shart emas.
+    if (state == AppLifecycleState.resumed) {
+      ReferralService.instance.ping();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     AppLocale.instance.removeListener(_onLocaleChanged);
     super.dispose();
   }

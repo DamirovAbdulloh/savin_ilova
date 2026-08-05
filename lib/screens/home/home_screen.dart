@@ -7,7 +7,11 @@ import '../../core/widgets/app_animations.dart';
 import '../../services/catalog_service.dart';
 import '../../services/providers.dart';
 import '../../services/wallet_service.dart';
+import '../catalog/business_detail_screen.dart';
+import '../catalog/new_partners_screen.dart';
+import '../catalog/search_screen.dart';
 import '../map/map_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -107,6 +111,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (v) => setState(() => _query = v),
+                      // Maydonga bosilganda to'liq qidiruv ekrani ochiladi
+                      // (so'nggi qidiruvlar + ommabop so'rovlar bilan).
+                      onTap: () => Navigator.of(context).push(
+                        AppPageRoute(
+                          page: SearchScreen(
+                            initialQuery: _query.isEmpty ? null : _query,
+                          ),
+                        ),
+                      ),
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search),
                         hintText: loc.t('home_search_hint'),
@@ -123,6 +136,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // Xabarlar (bildirishnomalar)
+                  PressableScale(
+                    onTap: () => Navigator.of(context)
+                        .push(AppPageRoute(page: const NotificationsScreen())),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.notifications_none,
+                          color: AppColors.textPrimary),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   PressableScale(
                     onTap: () => Navigator.of(context)
                         .push(AppPageRoute(page: const MapScreen())),
@@ -301,9 +330,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text(loc.t('home_nearby'),
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   TextButton(
-                    onPressed: () {
-                      ref.read(mainShellIndexProvider.notifier).state = 1;
-                    },
+                    onPressed: () => Navigator.of(context)
+                        .push(AppPageRoute(page: const NewPartnersScreen())),
                     child: Text(loc.t('home_see_all')),
                   ),
                 ],
@@ -424,10 +452,10 @@ class _BusinessCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressableScale(
-      // Kartaga bosilganda xarita SHU do'konga markazlashadi (foydalanuvchi
-      // joylashuviga emas).
+      // Kartaga bosilganda biznes tafsilot ekrani ochiladi (dizayndagidek);
+      // u yerdan xarita va yo'l ko'rsatish ham mavjud.
       onTap: () => Navigator.of(context)
-          .push(AppPageRoute(page: MapScreen(focusBusiness: business))),
+          .push(AppPageRoute(page: BusinessDetailScreen(business: business))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),

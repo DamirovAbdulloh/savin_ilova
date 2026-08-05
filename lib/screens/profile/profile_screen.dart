@@ -6,8 +6,11 @@ import '../../core/widgets/confirm_sheets.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_prefs.dart';
+import '../catalog/favorites_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../splash_onboarding/language_select_screen.dart';
 import 'about_app_screen.dart';
+import 'how_it_works_screen.dart';
 import 'edit_profile_screen.dart';
 import 'help_center_screen.dart';
 import 'language_settings_screen.dart';
@@ -318,6 +321,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               delay: const Duration(milliseconds: 280),
               child: Column(
                 children: [
+                  _MenuTile(
+                    icon: Icons.favorite_border,
+                    label: loc.t('fav_title'),
+                    onTap: () => Navigator.of(context)
+                        .push(AppPageRoute(page: const FavoritesScreen())),
+                  ),
+                  _MenuTile(
+                    icon: Icons.notifications_none,
+                    label: loc.t('notif_title'),
+                    onTap: () => Navigator.of(context)
+                        .push(AppPageRoute(page: const NotificationsScreen())),
+                  ),
+                  _MenuTile(
+                    icon: Icons.help_center_outlined,
+                    label: loc.t('how_title'),
+                    onTap: () => Navigator.of(context)
+                        .push(AppPageRoute(page: const HowItWorksScreen())),
+                  ),
                   _MenuTile(
                     icon: Icons.language,
                     label: loc.t('profile_lang'),

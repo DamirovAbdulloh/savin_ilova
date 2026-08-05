@@ -4,6 +4,8 @@ import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../services/wallet_service.dart';
+import 'purchase_history_screen.dart';
+import 'savings_chart_screen.dart';
 
 const _uzMonths = [
   'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
@@ -123,8 +125,35 @@ class _WalletScreenState extends State<WalletScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             FadeSlideIn(
-              child: Text(loc.t('wallet_title'),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(loc.t('wallet_title'),
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w700)),
+                  ),
+                  // Tejash grafigi (dizayn: Hamyon — Tejash grafigi)
+                  IconButton(
+                    tooltip: loc.t('wallet_chart_title'),
+                    onPressed: () => Navigator.of(context).push(
+                      AppPageRoute(
+                        page: SavingsChartScreen(transactions: _transactions),
+                      ),
+                    ),
+                    icon: const Icon(Icons.bar_chart_rounded),
+                  ),
+                  // Xarid tarixi (dizayn: Hamyon — Xarid tarixi)
+                  IconButton(
+                    tooltip: loc.t('wallet_history_title'),
+                    onPressed: () => Navigator.of(context).push(
+                      AppPageRoute(
+                        page: PurchaseHistoryScreen(transactions: _transactions),
+                      ),
+                    ),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             FadeSlideIn(

@@ -4,8 +4,10 @@ import 'core/i18n/app_strings.dart';
 import 'core/theme.dart';
 import 'core/storage/token_storage.dart';
 import 'core/widgets/savin_logo.dart';
+import 'services/deep_link_service.dart';
+import 'services/favorites_service.dart';
 import 'services/notification_prefs.dart';
-import 'services/referral_service.dart';
+import 'screens/referral/invite_accept_screen.dart';
 import 'screens/splash_onboarding/language_select_screen.dart';
 import 'screens/home/main_shell.dart';
 
@@ -13,7 +15,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppLocale.instance.load();
   await NotificationPrefs.instance.load();
-  await ReferralService.instance.load();
+  await FavoritesService.instance.load();
+  // Do'st taklif havolasi (deep link) — ilova havola orqali ochilgan bo'lsa
+  // kod shu yerda o'qiladi va ro'yxatdan o'tishga uzatiladi.
+  await DeepLinkService.instance.init();
   runApp(
     const ProviderScope(
       child: SavinApp(),
@@ -93,11 +98,19 @@ class _SplashGateState extends State<_SplashGate> with SingleTickerProviderState
     await Future.delayed(const Duration(milliseconds: 1400));
     final hasSession = await TokenStorage.instance.hasSession();
     if (!mounted) return;
+
+    // Taklif havolasi orqali kelgan va hali ro'yxatdan o'tmagan bo'lsa —
+    // avval "Sizni taklif qilishdi" ekrani ko'rsatiladi.
+    final inviteCode = DeepLinkService.instance.justArrivedCode;
+    final showInvite = !hasSession && inviteCode != null && inviteCode.isNotEmpty;
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 450),
-        pageBuilder: (_, __, ___) =>
-            hasSession ? const MainShell() : const LanguageSelectScreen(),
+        pageBuilder: (_, __, ___) {
+          if (showInvite) return InviteAcceptScreen(code: inviteCode);
+          return hasSession ? const MainShell() : const LanguageSelectScreen();
+        },
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
       ),

@@ -36,13 +36,18 @@ class ApiConstants {
 
   // Notifications
   static const String notifications = '/notifications/';
+  static const String notificationsReadAll = '/notifications/read-all/';
 
   // Premium a'zolik
   static const String membershipActivate = '/membership/activate/';
 
-  // Referal mukofot so'rovi
+  // Referal: kod, havola, do'stlar holati va mukofot so'rovi
+  static const String referralOverview = '/referral/overview/';
   static const String referralRequest = '/referral/request/';
   static const String referralStatus = '/referral/status/';
+
+  // Faollik signali — taklif qilingan do'stning 7 kunlik hisobi uchun
+  static const String activityPing = '/activity/ping/';
 
   // Kassaga aytiladigan 4 xonali kod (QR o'rniga) — har 5 daqiqada yangilanadi
   static const String redeemCode = '/redeem-code/';

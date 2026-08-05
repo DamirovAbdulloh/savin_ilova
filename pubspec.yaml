@@ -1,7 +1,7 @@
 name: savin_app
 description: "Savin — chegirmalar va lokal bizneslar uchun mobile ilova"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -36,6 +36,10 @@ dependencies:
 
   # Tashqi havolalar: telefon, email, Telegram/WhatsApp ulashish
   url_launcher: ^6.3.0
+
+  # Do'st taklif havolasini (deep link) ushlash: savin://invite/<KOD> va
+  # https://savin.uz/i/<KOD> — ilova ochilganda kod ro'yxatdan o'tishga uzatiladi
+  app_links: ^6.3.2
 
   # Profil rasmini galereyadan tanlash uchun
   image_picker: ^1.1.2

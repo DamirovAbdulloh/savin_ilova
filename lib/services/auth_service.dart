@@ -4,6 +4,7 @@ import '../core/api_client.dart';
 import '../core/constants.dart';
 import '../core/storage/token_storage.dart';
 import '../models/user.dart';
+import 'deep_link_service.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -46,11 +47,16 @@ class AuthService {
     String? lastName,
     required String phoneNumber,
   }) async {
+    // Do'st taklif havolasi orqali kelgan bo'lsa — kodni ham yuboramiz,
+    // shunda backend taklifni avtomatik biriktiradi.
+    final referralCode = DeepLinkService.instance.pendingCode;
     try {
       final response = await _dio.post(ApiConstants.register, data: {
         'first_name': firstName,
         if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
         'phone_number': phoneNumber,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referral_code': referralCode,
       });
       return (response.data as Map<String, dynamic>?) ?? <String, dynamic>{};
     } on DioException catch (e) {
@@ -71,6 +77,9 @@ class AuthService {
       final access = response.data['access'] as String;
       final refresh = response.data['refresh'] as String;
       await TokenStorage.instance.saveTokens(access: access, refresh: refresh);
+
+      // Taklif kodi ishlatildi — qayta biriktirilmasin
+      await DeepLinkService.instance.consume();
 
       return AppUser.fromJson(response.data['user'] as Map<String, dynamic>);
     } on DioException catch (e) {

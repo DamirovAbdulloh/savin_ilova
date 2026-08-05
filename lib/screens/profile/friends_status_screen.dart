@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../core/i18n/app_strings.dart';
+import '../../core/i18n/locale_builder.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../services/referral_service.dart';
+import 'referral_screen.dart';
 
-/// Do'stlar holati — taklif qilingan do'stlar ro'yxati, progress va
-/// (3 ta do'st a'zo bo'lgach) admin'ga mukofot so'rovi yuborish tugmasi.
+/// "Do'stlar holati" (dizayn: Referal — Do'stlar / Empty — Friends).
+///
+/// Har bir do'st uchun ko'rsatiladi: u faollashganmi ("Aktiv") yoki
+/// faollashishi uchun yana necha kun ilovaga kirishi kerak. 3 ta faol
+/// do'st yig'ilganda adminga 1 oylik obuna arizasi yuboriladi.
 class FriendsStatusScreen extends StatefulWidget {
   const FriendsStatusScreen({super.key});
 
@@ -15,39 +22,19 @@ class FriendsStatusScreen extends StatefulWidget {
 
 class _FriendsStatusScreenState extends State<FriendsStatusScreen> {
   final _ref = ReferralService.instance;
+  int _tab = 0; // 0 = hammasi, 1 = aktiv, 2 = kutilmoqda
+  bool _sending = false;
 
   @override
   void initState() {
     super.initState();
     _ref.addListener(_onChanged);
-    AppLocale.instance.addListener(_onChanged);
-    // Admin so'rovni tasdiqlagan/rad etgan bo'lsa — holatni yangilaymiz
-    // (tasdiqlansa hisoblagich 0 ga qaytadi).
-    _syncAndNotify();
-  }
-
-  Future<void> _syncAndNotify() async {
-    await _ref.syncStatus();
-    if (!mounted) return;
-    final result = _ref.lastResult;
-    if (result == null) return;
-    final loc = AppLocale.instance;
-    final msg = result == 'approved'
-        ? loc.t('friends_reward_approved')
-        : '${loc.t('friends_reward_rejected')}${_ref.lastReason.isNotEmpty ? ': ${_ref.lastReason}' : ''}';
-    _ref.clearLastResult();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: result == 'approved' ? AppColors.primary : AppColors.danger,
-      ),
-    );
+    _ref.load();
   }
 
   @override
   void dispose() {
     _ref.removeListener(_onChanged);
-    AppLocale.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -55,149 +42,210 @@ class _FriendsStatusScreenState extends State<FriendsStatusScreen> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _addFriend() async {
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocale.instance.t('profile_invite_friend')),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: "Do'st ismi"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(AppLocale.instance.t('common_cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: Text(AppLocale.instance.t('common_save')),
-          ),
-        ],
-      ),
-    );
-    if (name != null) {
-      await _ref.inviteFriend(name);
-    }
+  List<ReferralFriend> get _visible {
+    final all = _ref.friends;
+    return switch (_tab) {
+      1 => all.where((f) => f.isActive).toList(),
+      2 => all.where((f) => !f.isActive).toList(),
+      _ => all,
+    };
   }
 
-  Future<void> _sendReward() async {
-    await _ref.requestReward();
-    if (mounted) {
+  Future<void> _remind(ReferralFriend friend) async {
+    final text = Uri.encodeComponent(
+      "Salom${friend.name.isEmpty ? '' : ', ${friend.name}'}! Savin ilovasiga "
+      "kirib turishni unutmang — faollashishga yana ${friend.daysLeft} kun qoldi.",
+    );
+    final uri = friend.phone.isNotEmpty
+        ? Uri.parse('sms:${friend.phone}?body=$text')
+        : Uri.parse(
+            'https://t.me/share/url?url=${Uri.encodeComponent(_ref.link)}&text=$text');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocale.instance.t('friends_reward_sent'))),
+        SnackBar(content: Text(AppLocale.instance.t('help_link_error'))),
       );
     }
   }
 
+  Future<void> _requestReward() async {
+    setState(() => _sending = true);
+    final error = await _ref.requestReward();
+    if (!mounted) return;
+    setState(() => _sending = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? AppLocale.instance.t('friends_reward_sent')),
+        backgroundColor: error == null ? AppColors.primary : AppColors.danger,
+      ),
+    );
+  }
+
+  void _openInvite() {
+    Navigator.of(context).push(AppPageRoute(page: const ReferralScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocale.instance;
-    final friends = _ref.invitedFriends;
-
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: Text(loc.t('friends_title'))),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            // Statistika
-            FadeSlideIn(
-              child: Row(
-                children: [
-                  _stat('${_ref.invitedCount}', loc.t('friends_invited')),
-                  const SizedBox(width: 10),
-                  _stat('${_ref.joinedCount}', loc.t('friends_joined')),
-                  const SizedBox(width: 10),
-                  _stat('${_ref.bonusDays}', loc.t('friends_bonus_days')),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Mukofot so'rovi kartasi
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 80),
-              child: _rewardCard(loc),
-            ),
-            const SizedBox(height: 20),
-            // Do'stlar ro'yxati
-            if (friends.isEmpty)
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 140),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
+    return LocaleBuilder(
+      builder: (context, loc) => Scaffold(
+        appBar: AppBar(
+          leading: const BackButton(),
+          title: Text(loc.t('friends_title')),
+        ),
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: _ref.load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              children: [
+                // Uchta ko'rsatkich: taklif qildim / a'zo bo'lgan / kun bonus
+                FadeSlideIn(
+                  child: Row(
                     children: [
-                      Container(
-                        width: 64, height: 64,
-                        decoration: const BoxDecoration(
-                            color: AppColors.surface, shape: BoxShape.circle),
-                        child: const Icon(Icons.group_outlined,
-                            color: AppColors.textSecondary, size: 28),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(loc.t('friends_empty'),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                      _stat('${_ref.invitedCount}', loc.t('friends_invited')),
+                      _stat('${_ref.activeCount}', loc.t('friends_joined'),
+                          highlight: true),
+                      _stat('${_ref.bonusDays}', loc.t('friends_bonus_days')),
                     ],
                   ),
                 ),
-              )
-            else
-              ...List.generate(friends.length, (i) {
-                return FadeSlideIn(
-                  delay: Duration(milliseconds: 140 + i * 50),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 10),
+                const SizedBox(height: 16),
+
+                if (_ref.friends.isEmpty)
+                  _emptyState(loc)
+                else ...[
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 80),
+                    child: Row(
+                      children: [
+                        _tabChip(0, loc.t('friends_tab_all'), _ref.invitedCount),
+                        const SizedBox(width: 8),
+                        _tabChip(1, loc.t('friends_tab_active'), _ref.activeCount),
+                        const SizedBox(width: 8),
+                        _tabChip(2, loc.t('friends_tab_pending'), _ref.pendingCount),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  for (var i = 0; i < _visible.length; i++)
+                    FadeSlideIn(
+                      key: ValueKey(_visible[i].id),
+                      delay: Duration(milliseconds: 120 + i * 60),
+                      child: _friendTile(_visible[i], loc),
+                    ),
+                  const SizedBox(height: 8),
+                  Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            friends[i].isNotEmpty ? friends[i][0].toUpperCase() : '?',
-                            style: const TextStyle(
-                                color: Colors.white, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
+                        const Icon(Icons.info_outline,
+                            size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: Text(friends[i],
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14)),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentGreenBg,
-                            borderRadius: BorderRadius.circular(20),
+                          child: Text(
+                            loc
+                                .t('friends_rule')
+                                .replaceAll('{n}', '${_ref.requiredDays}'),
+                            style: const TextStyle(
+                                fontSize: 11.5, color: AppColors.textSecondary),
                           ),
-                          child: Text(loc.t('friends_joined'),
-                              style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
                   ),
-                );
-              }),
-            const SizedBox(height: 12),
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 220),
-              child: OutlinedButton.icon(
-                onPressed: _addFriend,
-                icon: const Icon(Icons.person_add_alt, size: 18),
-                label: Text(loc.t('profile_invite_friend')),
-              ),
+                ],
+
+                const SizedBox(height: 16),
+                if (_ref.canRequest || _ref.rewardRequested)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          _sending || _ref.rewardRequested ? null : _requestReward,
+                      child: Text(_ref.rewardRequested
+                          ? loc.t('friends_reward_pending')
+                          : loc.t('friends_reward_send')),
+                    ),
+                  ),
+                if (_ref.requestStatus == 'rejected' &&
+                    _ref.requestReason.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${loc.t('friends_reward_rejected')}: ${_ref.requestReason}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.danger),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _openInvite,
+                  icon: const Icon(Icons.person_add_alt, size: 18),
+                  label: Text(loc.t('ref_invite_more')),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    '${loc.t('ref_your_code')}: ${_ref.code}',
+                    style: const TextStyle(
+                        fontSize: 11.5, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState(AppLocale loc) {
+    return FadeSlideIn(
+      delay: const Duration(milliseconds: 80),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 96,
+              height: 96,
+              decoration: const BoxDecoration(
+                  color: AppColors.primaryLight, shape: BoxShape.circle),
+              alignment: Alignment.center,
+              child: const Text('🎁', style: TextStyle(fontSize: 40)),
+            ),
+            const SizedBox(height: 18),
+            Text(loc.t('friends_empty'),
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            Text(loc.t('friends_empty_sub'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 12.5, color: AppColors.textSecondary)),
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: _openInvite,
+              child: Text(loc.t('friends_invite_btn')),
             ),
           ],
         ),
@@ -205,9 +253,10 @@ class _FriendsStatusScreenState extends State<FriendsStatusScreen> {
     );
   }
 
-  Widget _stat(String value, String label) {
+  Widget _stat(String value, String label, {bool highlight = false}) {
     return Expanded(
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -216,87 +265,170 @@ class _FriendsStatusScreenState extends State<FriendsStatusScreen> {
         child: Column(
           children: [
             Text(value,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color:
+                        highlight ? AppColors.primary : AppColors.textPrimary)),
             const SizedBox(height: 2),
             Text(label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                style:
+                    const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _rewardCard(AppLocale loc) {
-    if (_ref.rewardRequested) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.hourglass_top, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(loc.t('friends_reward_pending'),
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_ref.isEligible) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, Color(0xFF2BA94A)],
+  Widget _tabChip(int index, String label, int count) {
+    final selected = _tab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tab = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primaryLight : AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: selected ? AppColors.primary : Colors.transparent),
           ),
-          borderRadius: BorderRadius.circular(16),
+          alignment: Alignment.center,
+          child: Text('$label $count',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color:
+                      selected ? AppColors.primary : AppColors.textSecondary)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc.t('friends_reward_ready'),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                ),
-                onPressed: _sendReward,
-                icon: const Icon(Icons.card_giftcard, size: 18),
-                label: Text(loc.t('friends_reward_send')),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Hali 3 taga yetmagan
-    final need = _ref.remainingForReward;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+    );
+  }
+
+  Widget _friendTile(ReferralFriend f, AppLocale loc) {
+    final initial = f.name.trim().isEmpty ? '?' : f.name.trim()[0].toUpperCase();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
         children: [
-          const Text('🎁', style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              loc.t('friends_need_more').replaceAll('{n}', '$need'),
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: f.isActive ? AppColors.primary : AppColors.surface,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(initial,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: f.isActive
+                            ? Colors.white
+                            : AppColors.textSecondary)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(f.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    if (f.phone.isNotEmpty)
+                      Text(f.phone,
+                          style: const TextStyle(
+                              fontSize: 11.5, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: f.isActive
+                      ? AppColors.accentGreenBg
+                      : AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  f.isActive
+                      ? loc.t('friends_status_active')
+                      : loc.t('friends_status_pending'),
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: f.isActive ? AppColors.primary : AppColors.warning),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Faollik jarayoni: necha kun kirdi / yana necha kun kerak
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: f.requiredDays == 0
+                  ? 1
+                  : (f.activeDays / f.requiredDays).clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: AppColors.border,
+              valueColor: AlwaysStoppedAnimation(
+                  f.isActive ? AppColors.primary : AppColors.warning),
             ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  f.isActive
+                      ? loc.t('friends_active_done')
+                      : loc
+                          .t('friends_days_left')
+                          .replaceAll('{n}', '${f.daysLeft}'),
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      color: f.isActive
+                          ? AppColors.primary
+                          : AppColors.textSecondary),
+                ),
+              ),
+              Text(
+                loc
+                    .t('friends_active_progress')
+                    .replaceAll('{a}', '${f.activeDays}')
+                    .replaceAll('{b}', '${f.requiredDays}'),
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.textSecondary),
+              ),
+              if (!f.isActive) ...[
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => _remind(f),
+                  child: Row(
+                    children: [
+                      Text(loc.t('friends_remind'),
+                          style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary)),
+                      const Icon(Icons.north_east,
+                          size: 12, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

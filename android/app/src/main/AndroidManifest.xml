@@ -36,6 +36,26 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Do'st taklif havolasi (deep link): savin://invite/<KOD>
+                 Landing saytdagi /i/<KOD> sahifasi shu sxemani chaqiradi;
+                 ilova o'rnatilmagan bo'lsa brauzer Play Marketga o'tadi. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="savin" android:host="invite"/>
+            </intent-filter>
+
+            <!-- https://savin.uz/i/<KOD> — App Link. Domenda
+                 /.well-known/assetlinks.json qo'yilgach havola to'g'ridan-
+                 to'g'ri ilovada ochiladi (brauzersiz). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="savin.uz" android:pathPrefix="/i/"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

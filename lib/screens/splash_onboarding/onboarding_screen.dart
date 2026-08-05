@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../core/widgets/savin_logo.dart';
 import '../auth/auth_name_screen.dart';
+import 'permissions_screen.dart';
 
 class _OnboardData {
   final String title;
@@ -234,8 +235,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _goToAuth() {
+    // Dizayndagidek: onboardingdan keyin bildirishnoma va joylashuv
+    // ruxsatlari so'raladi, so'ng ro'yxatdan o'tish boshlanadi.
     Navigator.of(context).push(
-      AppPageRoute(page: const AuthNameScreen()),
+      AppPageRoute(
+        page: PermissionsScreen(
+          onDone: () => Navigator.of(context).pushReplacement(
+            AppPageRoute(page: const AuthNameScreen()),
+          ),
+        ),
+      ),
     );
   }
 }

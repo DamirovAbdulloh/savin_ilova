@@ -1,126 +1,152 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_client.dart';
 import '../core/constants.dart';
 
-/// Referal (do'st taklif qilish) holatini boshqaradi.
+/// Bitta taklif qilingan do'st va uning faollik holati.
+class ReferralFriend {
+  final String id;
+  final String name;
+  final String phone;
+  final String status; // 'pending' | 'active'
+  final int activeDays;
+  final int daysLeft;
+  final int requiredDays;
+  final DateTime? joinedAt;
+
+  const ReferralFriend({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.status,
+    required this.activeDays,
+    required this.daysLeft,
+    required this.requiredDays,
+    this.joinedAt,
+  });
+
+  bool get isActive => status == 'active';
+
+  factory ReferralFriend.fromJson(Map<String, dynamic> json) {
+    return ReferralFriend(
+      id: '${json['id']}',
+      name: (json['name'] ?? "Do'st").toString(),
+      phone: (json['phone'] ?? '').toString(),
+      status: (json['status'] ?? 'pending').toString(),
+      activeDays: (json['active_days'] ?? 0) as int,
+      daysLeft: (json['days_left'] ?? 0) as int,
+      requiredDays: (json['required_days'] ?? 7) as int,
+      joinedAt: DateTime.tryParse('${json['joined_at']}'),
+    );
+  }
+}
+
+/// Referal (do'st taklif qilish) holati — HAQIQIY backend ma'lumoti bilan.
 ///
-/// 1-bosqich: taklif qilingan do'stlar va mukofot so'rovi holati qurilmada
-/// (shared_preferences) saqlanadi. 2-bosqich: bu ma'lumot backend bilan
-/// sinxronlanadi va "mukofot so'rovi" admin backendga POST qilinadi
-/// (admin panelning "So'rovlar" bo'limida ko'rinadi).
+/// Muhim qoida: do'st ro'yxatdan o'tishi taklifni to'liq qilmaydi. U bir
+/// hafta davomida ilovaga kirib turishi kerak; shundan keyingina "Aktiv"
+/// bo'ladi. 3 ta faol do'st yig'ilganda adminga 1 oylik obuna arizasi
+/// yuboriladi.
 class ReferralService extends ChangeNotifier {
   ReferralService._internal();
   static final ReferralService instance = ReferralService._internal();
 
-  static const _kFriends = 'referral_invited_friends';
-  static const _kRequested = 'referral_reward_requested';
+  String _code = '';
+  String _link = '';
+  int _invitedCount = 0;
+  int _activeCount = 0;
+  int _pendingCount = 0;
+  int _progress = 0;
+  int _remainingForReward = 3;
+  int _rewardRequired = 3;
+  int _requiredDays = 7;
+  int _bonusDays = 0;
+  bool _canRequest = false;
+  String? _requestStatus; // null | 'pending' | 'approved' | 'rejected'
+  String _requestReason = '';
+  List<ReferralFriend> _friends = const [];
+  bool _loaded = false;
 
-  final List<String> _invitedFriends = [];
-  bool _rewardRequested = false;
+  String get code => _code;
+  String get link => _link.isNotEmpty ? _link : 'https://savin.uz';
+  int get invitedCount => _invitedCount;
+  int get activeCount => _activeCount;
+  int get pendingCount => _pendingCount;
+  int get progress => _progress;
+  int get remainingForReward => _remainingForReward;
+  int get rewardRequired => _rewardRequired;
+  int get requiredDays => _requiredDays;
+  int get bonusDays => _bonusDays;
+  bool get canRequest => _canRequest;
+  bool get rewardRequested => _requestStatus == 'pending';
+  String? get requestStatus => _requestStatus;
+  String get requestReason => _requestReason;
+  List<ReferralFriend> get friends => List.unmodifiable(_friends);
+  bool get loaded => _loaded;
 
-  // Backend'dagi oxirgi so'rov natijasi (sinxronlangandan keyin):
-  // null | 'approved' | 'rejected'. 'rejected' bo'lsa _lastReason to'ladi.
-  String? _lastResult;
-  String _lastReason = '';
+  /// Do'stlarga yuboriladigan matn (havola bilan).
+  String get shareText =>
+      "Men sizni Savin'ga taklif qilaman! Ro'yxatdan o'ting va 400+ joyda "
+      "10–40% chegirmadan foydalaning.\n$link";
 
-  String? get lastResult => _lastResult;
-  String get lastReason => _lastReason;
-
-  List<String> get invitedFriends => List.unmodifiable(_invitedFriends);
-  int get invitedCount => _invitedFriends.length;
-
-  /// 1-bosqichda "a'zo bo'lgan" do'stlar soni taklif qilinganlarga teng deb
-  /// olinadi (haqiqiy tasdiq 2-bosqichda backenddan keladi).
-  int get joinedCount => _invitedFriends.length;
-
-  /// Har 3 ta do'st uchun 1 oy (30 kun) bonus.
-  int get bonusDays => (joinedCount ~/ 3) * 30;
-
-  /// Mukofot so'rovini yuborish mumkinmi? (kamida 3 ta do'st a'zo bo'lgan)
-  bool get isEligible => joinedCount >= 3;
-
-  bool get rewardRequested => _rewardRequested;
-
-  int get remainingForReward {
-    final left = 3 - (joinedCount % 3);
-    return left == 3 ? 0 : left;
-  }
-
+  /// Backenddan holatni oladi. Internet bo'lmasa oxirgi holat qoladi.
   Future<void> load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _invitedFriends
-        ..clear()
-        ..addAll(prefs.getStringList(_kFriends) ?? const []);
-      _rewardRequested = prefs.getBool(_kRequested) ?? false;
+      final res = await ApiClient.instance.dio.get(ApiConstants.referralOverview);
+      final data = Map<String, dynamic>.from(res.data as Map);
+      _code = (data['code'] ?? '').toString();
+      _link = (data['link'] ?? '').toString();
+      _invitedCount = (data['invited_count'] ?? 0) as int;
+      _activeCount = (data['active_count'] ?? 0) as int;
+      _pendingCount = (data['pending_count'] ?? 0) as int;
+      _progress = (data['progress'] ?? 0) as int;
+      _remainingForReward = (data['remaining_for_reward'] ?? 3) as int;
+      _rewardRequired = (data['reward_required'] ?? 3) as int;
+      _requiredDays = (data['required_days'] ?? 7) as int;
+      _bonusDays = (data['bonus_days'] ?? 0) as int;
+      _canRequest = (data['can_request'] ?? false) as bool;
+      _requestStatus = data['request_status'] as String?;
+      _requestReason = (data['request_reason'] ?? '').toString();
+      _friends = ((data['friends'] as List?) ?? const [])
+          .map((e) => ReferralFriend.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      _loaded = true;
       notifyListeners();
+    } catch (_) {
+      // Internet/server yo'q — mavjud holat saqlanadi
+    }
+  }
+
+  /// Ilova ochilganda "men faolman" signali. Taklif qilingan do'stning
+  /// 7 kunlik hisobiga shu orqali kun qo'shiladi.
+  Future<void> ping() async {
+    try {
+      await ApiClient.instance.dio.post(ApiConstants.activityPing);
     } catch (_) {}
   }
 
-  Future<void> inviteFriend(String name) async {
-    final trimmed = name.trim();
-    _invitedFriends.add(trimmed.isEmpty ? "Do'st ${_invitedFriends.length + 1}" : trimmed);
-    notifyListeners();
-    await _persist();
-  }
-
-  /// Admin'ga referal mukofoti so'rovini yuborish.
-  /// Backendga (savin_django /referral/request/) POST qiladi — u yerda so'rov
-  /// saqlanadi va admin panelning "So'rovlar" bo'limida ko'rinadi.
-  Future<void> requestReward() async {
-    if (!isEligible) return;
+  /// 3 ta faol do'st yig'ilganda adminga 1 oylik obuna arizasini yuborish.
+  /// Xato bo'lsa sabab matni qaytadi, muvaffaqiyatli bo'lsa `null`.
+  Future<String?> requestReward() async {
     try {
-      await ApiClient.instance.dio.post(ApiConstants.referralRequest, data: {
-        'invited_count': joinedCount,
-      });
-    } catch (_) {
-      // Internet/server bo'lmasa ham mahalliy holatni belgilaymiz —
-      // foydalanuvchi qayta urinishi shart bo'lmasin (best-effort).
-    }
-    _rewardRequested = true;
-    notifyListeners();
-    await _persist();
-  }
-
-  /// Backend'dagi so'rov holatini tekshiradi. Admin TASDIQLAGAN bo'lsa —
-  /// mukofot berilgan, referal hisoblagichi 0 ga qaytadi (yangi tsikl).
-  /// RAD ETILGAN bo'lsa — sabab saqlanadi va foydalanuvchi qayta so'rov
-  /// yubora oladi.
-  Future<void> syncStatus() async {
-    if (!_rewardRequested) return;
-    try {
-      final res = await ApiClient.instance.dio.get(ApiConstants.referralStatus);
-      final status = res.data['status'] as String?;
-      if (status == 'approved') {
-        _invitedFriends.clear(); // 3/3 -> 0/3 (mukofot olindi)
-        _rewardRequested = false;
-        _lastResult = 'approved';
-        _lastReason = '';
-        notifyListeners();
-        await _persist();
-      } else if (status == 'rejected') {
-        _rewardRequested = false;
-        _lastResult = 'rejected';
-        _lastReason = (res.data['reason'] as String?) ?? '';
-        notifyListeners();
-        await _persist();
-      }
-    } catch (_) {
-      // internet/server bo'lmasa — jim o'tkazamiz
+      await ApiClient.instance.dio.post(ApiConstants.referralRequest);
+      await load();
+      return null;
+    } catch (e) {
+      String message = "So'rovni yuborib bo'lmadi. Keyinroq urinib ko'ring.";
+      try {
+        final data = (e as dynamic).response?.data;
+        if (data is Map && data['detail'] != null) message = data['detail'].toString();
+      } catch (_) {}
+      return message;
     }
   }
 
+  /// Admin qarorini ko'rsatgandan keyin bayroqni tozalash.
   void clearLastResult() {
-    _lastResult = null;
-    _lastReason = '';
-  }
-
-  Future<void> _persist() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_kFriends, _invitedFriends);
-      await prefs.setBool(_kRequested, _rewardRequested);
-    } catch (_) {}
+    if (_requestStatus == 'approved' || _requestStatus == 'rejected') {
+      _requestStatus = null;
+      _requestReason = '';
+      notifyListeners();
+    }
   }
 }
