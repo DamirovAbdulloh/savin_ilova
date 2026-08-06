@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../core/widgets/savin_logo.dart';
 import '../auth/auth_name_screen.dart';
+import '../profile/how_it_works_screen.dart';
 import 'permissions_screen.dart';
 
 class _OnboardData {
@@ -64,92 +65,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final page = pages[_index];
     final isDark = page.bg == AppColors.primaryDark;
 
+    // Dizayn: sahifa OQ fonda; rangli faqat yuqoridagi tasvir paneli.
+    // Sarlavha va matn har doim oq qismda, qora rangda turadi.
     return Scaffold(
-      backgroundColor: page.bg,
-      // Fon rangi sahifalar orasida silliq o'tadi
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeOut,
-        color: page.bg,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SavinLogo(height: 26, color: isDark ? Colors.white : null),
-                    TextButton(
-                      onPressed: _goToAuth,
-                      child: Text(AppLocale.instance.t('common_skip'),
-                          style: TextStyle(color: isDark ? Colors.white70 : AppColors.textSecondary)),
-                    ),
-                  ],
-                ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SavinLogo(height: 26),
+                  TextButton(
+                    onPressed: _goToAuth,
+                    child: Text(AppLocale.instance.t('common_skip'),
+                        style: const TextStyle(color: AppColors.primary)),
+                  ),
+                ],
               ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: pages.length,
-                  onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) {
-                    final p = pages[i];
-                    final pageDark = p.bg == AppColors.primaryDark;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Vizual har safar yumshoq "sakrab" paydo bo'ladi
-                          TweenAnimationBuilder<double>(
+            ),
+            Expanded(
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: pages.length,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemBuilder: (context, i) {
+                  final p = pages[i];
+                  return Column(
+                    children: [
+                      // Tasvir paneli — chetdan chetgacha, rangli fon
+                      Expanded(
+                        flex: 5,
+                        child: Container(
+                          width: double.infinity,
+                          color: p.bg,
+                          alignment: Alignment.center,
+                          child: TweenAnimationBuilder<double>(
                             key: ValueKey(i == _index),
                             tween: Tween(begin: 0.7, end: 1),
                             duration: const Duration(milliseconds: 600),
                             curve: Curves.elasticOut,
                             builder: (context, scale, child) =>
                                 Transform.scale(scale: scale, child: child),
-                            child: i == 0
-                                // 1-sahifa: Figma'dagi kabi ustma-ust chegirma kartalari
-                                ? const _StackedDiscountCards()
-                                : i == 2
-                                    // 3-sahifa: "247K tejagansiz" halqasi (dizayndagidek)
-                                    ? const _SavingsRing()
-                                    : Container(
-                                        width: 160,
-                                        height: 160,
-                                        decoration: BoxDecoration(
-                                          color: p.fg.withValues(alpha: 0.12),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(p.icon, size: 72, color: p.fg),
-                                      ),
+                            child: switch (i) {
+                              // 1-sahifa: ustma-ust chegirma kartalari
+                              0 => const _StackedDiscountCards(),
+                              // 2-sahifa: telefon ichida QR (dizayndagidek)
+                              1 => const _QrShowcase(),
+                              // 3-sahifa: "247K tejagansiz" halqasi
+                              _ => const _SavingsRing(),
+                            },
                           ),
-                          const SizedBox(height: 40),
-                          Text(
-                            p.title,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w700,
-                              color: pageDark ? Colors.white : AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            p.subtitle,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: pageDark ? Colors.white70 : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    );
-                  },
-                ),
+                      Expanded(
+                        flex: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 28, 32, 0),
+                          child: Column(
+                            children: [
+                              Text(
+                                p.title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                p.subtitle,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 1.4,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
+            ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(pages.length, (i) {
@@ -161,9 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: active ? 20 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: active
-                          ? (isDark ? Colors.white : AppColors.primary)
-                          : (isDark ? Colors.white30 : AppColors.border),
+                      color: active ? AppColors.primary : AppColors.border,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   );
@@ -207,9 +210,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: [
                       Text(
                         '${AppLocale.instance.t('onboard_have_account')} ',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
-                          color: isDark ? Colors.white70 : AppColors.textSecondary,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       GestureDetector(
@@ -230,23 +233,144 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 
   void _goToAuth() {
-    // Dizayndagidek: onboardingdan keyin bildirishnoma va joylashuv
-    // ruxsatlari so'raladi, so'ng ro'yxatdan o'tish boshlanadi.
+    // Dizayndagi ketma-ketlik: onboarding -> ruxsatlar -> "Qanday ishlaydi?"
+    // -> "QR chegirma olish" bosilgach ro'yxatdan o'tish boshlanadi.
     Navigator.of(context).push(
       AppPageRoute(
         page: PermissionsScreen(
           onDone: () => Navigator.of(context).pushReplacement(
-            AppPageRoute(page: const AuthNameScreen()),
+            AppPageRoute(
+              page: HowItWorksScreen(
+                onContinue: () => Navigator.of(context).pushReplacement(
+                  AppPageRoute(page: const AuthNameScreen()),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Onboarding 2-sahifasi tasviri (dizayn: "QR ko'rsating — tejang").
+///
+/// To'q yashil fonda: orqada katta yashil doira, oldinda telefon konturi,
+/// uning ichida oq QR kvadrat va atrofida uchqunlar.
+class _QrShowcase extends StatelessWidget {
+  const _QrShowcase();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 240,
+      height: 240,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Orqadagi katta doira
+          Positioned(
+            right: 6,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.22),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Telefon konturi
+          Container(
+            width: 118,
+            height: 196,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35), width: 2),
+            ),
+            alignment: Alignment.center,
+            child: Container(
+              width: 76,
+              height: 76,
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: CustomPaint(
+                      size: const Size(62, 44),
+                      painter: _MiniQrPainter(),
+                    ),
+                  ),
+                  const Text('QR',
+                      style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryDark)),
+                ],
+              ),
+            ),
+          ),
+          // Uchqunlar
+          const Positioned(top: 32, right: 30, child: _Sparkle(size: 16)),
+          const Positioned(bottom: 54, right: 16, child: _Sparkle(size: 11)),
+          const Positioned(bottom: 40, left: 44, child: _Sparkle(size: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Sparkle extends StatelessWidget {
+  final double size;
+  const _Sparkle({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.auto_awesome, size: size, color: AppColors.primary);
+  }
+}
+
+/// Kichik QR naqshi — haqiqiy kod emas, faqat tasvir.
+class _MiniQrPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = AppColors.primaryDark;
+    const cols = 7;
+    const rows = 5;
+    final cw = size.width / cols;
+    final ch = size.height / rows;
+    // Barqaror "tasodifiy" naqsh (har chizishda bir xil)
+    const pattern = [
+      1, 1, 0, 1, 0, 1, 1,
+      1, 0, 1, 0, 1, 0, 1,
+      0, 1, 1, 1, 0, 1, 0,
+      1, 0, 1, 0, 1, 1, 1,
+      1, 1, 0, 1, 1, 0, 1,
+    ];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        if (pattern[r * cols + c] == 1) {
+          canvas.drawRect(
+            Rect.fromLTWH(c * cw + 1, r * ch + 1, cw - 2, ch - 2),
+            paint,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Figma'dagi kabi ustma-ust chegirma kartalari (-40% CHEGIRMA).

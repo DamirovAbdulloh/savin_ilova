@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../core/widgets/auth_badge.dart';
 import '../../services/auth_service.dart';
 import '../home/main_shell.dart';
+import '../payment/payment_method_screen.dart';
 
 class AuthOtpScreen extends StatefulWidget {
   final String phoneNumber;
@@ -171,12 +172,23 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
       _error = null;
     });
     try {
-      await AuthService.instance.login(phoneNumber: widget.phoneNumber, otpCode: _code);
+      final user = await AuthService.instance
+          .login(phoneNumber: widget.phoneNumber, otpCode: _code);
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-        (route) => false,
-      );
+      // Dizayn: kod tasdiqlangach, obunasi yo'q foydalanuvchi avval to'lov
+      // oqimini ko'radi (to'lov usuli -> jarayon -> tabriklaymiz). Obunasi
+      // bor bo'lsa to'g'ridan-to'g'ri ilovaga kiradi.
+      if (user.isPremium == true) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
+          (route) => false,
+        );
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       // Urinish faqat server kodni RAD ETGANDA sarflanadi (HTTP 400).

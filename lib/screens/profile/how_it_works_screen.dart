@@ -8,11 +8,23 @@ import '../../services/providers.dart';
 
 /// "Qanday ishlaydi?" — 4 qadamli tushuntirish (dizayndagi ekran).
 ///
-/// Profil va onboardingdan ochiladi; pastdagi tugma QR ekraniga olib boradi.
+/// Ikki joyda ishlatiladi:
+///  * ro'yxatdan o'tishdan OLDIN — onboardingdan keyin ko'rsatiladi va
+///    "QR chegirma olish" bosilganda ro'yxatdan o'tish boshlanadi
+///    (`onContinue` beriladi);
+///  * ilova ichida, Profil bo'limidan — tugma QR ekraniga olib boradi.
 class HowItWorksScreen extends ConsumerWidget {
-  const HowItWorksScreen({super.key});
+  /// Berilgan bo'lsa, pastdagi tugma shu funksiyani chaqiradi
+  /// (ro'yxatdan o'tishni boshlash uchun).
+  final VoidCallback? onContinue;
+
+  const HowItWorksScreen({super.key, this.onContinue});
 
   void _openQr(BuildContext context, WidgetRef ref) {
+    if (onContinue != null) {
+      onContinue!();
+      return;
+    }
     ref.read(mainShellIndexProvider.notifier).state = 2;
     Navigator.of(context).popUntil((r) => r.isFirst);
   }
