@@ -7,6 +7,65 @@ import '../../services/wallet_service.dart';
 import 'purchase_history_screen.dart';
 import 'savings_chart_screen.dart';
 
+/// Hamyon burger menyusidagi bitta variant (grafik / tarix).
+class _WalletMenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _WalletMenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 21, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 const _uzMonths = [
   'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
   'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr',
@@ -100,6 +159,91 @@ class _WalletScreenState extends State<WalletScreen> {
     }
   }
 
+  /// Hamyon menyusi (dizayn: sarlavhaning o'ng burchagidagi burger).
+  /// Ikkitadan biri tanlanadi: tejash grafigi yoki xarid tarixi.
+  void _openWalletMenu() {
+    final loc = AppLocale.instance;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(loc.t('wallet_menu_title'),
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 14),
+              _WalletMenuTile(
+                icon: Icons.bar_chart_rounded,
+                title: loc.t('wallet_chart_title'),
+                subtitle: loc.t('wallet_chart_sub'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(
+                    AppPageRoute(
+                      page: SavingsChartScreen(transactions: _transactions),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _WalletMenuTile(
+                icon: Icons.receipt_long_outlined,
+                title: loc.t('wallet_history_title'),
+                subtitle: loc.t('wallet_history_sub'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(
+                    AppPageRoute(
+                      page: PurchaseHistoryScreen(transactions: _transactions),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.surface,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(loc.t('common_cancel'),
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openDetail(String title, List<TransactionItem> items) {
     showModalBottomSheet(
       context: context,
@@ -132,25 +276,12 @@ class _WalletScreenState extends State<WalletScreen> {
                         style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.w700)),
                   ),
-                  // Tejash grafigi (dizayn: Hamyon — Tejash grafigi)
+                  // Dizayndagi burger ikonka: bosilganda "Tejash grafigi" yoki
+                  // "Xarid tarixi" tanlanadigan oyna ochiladi.
                   IconButton(
-                    tooltip: loc.t('wallet_chart_title'),
-                    onPressed: () => Navigator.of(context).push(
-                      AppPageRoute(
-                        page: SavingsChartScreen(transactions: _transactions),
-                      ),
-                    ),
-                    icon: const Icon(Icons.bar_chart_rounded),
-                  ),
-                  // Xarid tarixi (dizayn: Hamyon — Xarid tarixi)
-                  IconButton(
-                    tooltip: loc.t('wallet_history_title'),
-                    onPressed: () => Navigator.of(context).push(
-                      AppPageRoute(
-                        page: PurchaseHistoryScreen(transactions: _transactions),
-                      ),
-                    ),
-                    icon: const Icon(Icons.receipt_long_outlined),
+                    tooltip: loc.t('wallet_menu_title'),
+                    onPressed: _openWalletMenu,
+                    icon: const Icon(Icons.menu_rounded),
                   ),
                 ],
               ),

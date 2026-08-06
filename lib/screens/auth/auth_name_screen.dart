@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
+import '../../core/widgets/auth_badge.dart';
 import 'auth_phone_screen.dart';
 
 class AuthNameScreen extends StatefulWidget {
@@ -38,27 +39,9 @@ class _AuthNameScreenState extends State<AuthNameScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              // progress indicator (1/3)
-              Row(
-                children: List.generate(3, (i) {
-                  return Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeOut,
-                      margin: const EdgeInsets.only(right: 6),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: i == 0 ? AppColors.primary : AppColors.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+              const AuthStepDots(step: 1),
               const SizedBox(height: 32),
-              const FadeSlideIn(
-                child: Text('👋', style: TextStyle(fontSize: 36)),
-              ),
+              const FadeSlideIn(child: AuthBadge(emoji: '👋')),
               const SizedBox(height: 16),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),

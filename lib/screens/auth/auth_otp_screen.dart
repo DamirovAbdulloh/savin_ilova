@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
+import '../../core/widgets/auth_badge.dart';
 import '../../services/auth_service.dart';
 import '../home/main_shell.dart';
 
@@ -114,7 +117,7 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
       });
       _startResendTimer((result['resend_after'] as num?)?.toInt() ?? _resendCooldownSeconds);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yangi kod yuborildi')),
+        SnackBar(content: Text(AppLocale.instance.t('auth_otp_new_sent'))),
       );
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -211,6 +214,10 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocale.instance;
+
+    // Dizayn: "Auth — 5 daqiqa blok" ekrani — soat tasviri, sariq kartada
+    // qolgan vaqt va qo'llab-quvvatlash havolasi.
     if (_blocked) {
       return Scaffold(
         appBar: AppBar(leading: const BackButton()),
@@ -220,19 +227,68 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_clock, size: 56, color: AppColors.warning),
-                const SizedBox(height: 20),
-                const Text('Vaqtincha bloklangan',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                Container(
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.lock_clock,
+                      size: 46, color: AppColors.warning),
+                ),
+                const SizedBox(height: 22),
+                Text(loc.t('auth_otp_blocked'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
-                const Text(
-                  "Siz 3 marta noto'g'ri kod kiritdingiz. Xavfsizlik uchun urinishlar vaqtincha to'xtatildi.",
+                Text(
+                  loc.t('auth_otp_blocked_sub'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 24),
-                Text(_blockTimeFormatted,
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.warning)),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 34, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(loc.t('auth_otp_left'),
+                          style: const TextStyle(
+                              color: AppColors.warning,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Text(_blockTimeFormatted,
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFD9480F))),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 26),
+                Text(loc.t('auth_otp_problem'),
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 12.5)),
+                TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://t.me/savinapp_support'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Text(loc.t('auth_otp_support'),
+                      style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5)),
+                ),
               ],
             ),
           ),
@@ -248,29 +304,18 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: List.generate(3, (i) {
-                  return Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 6),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+              const AuthStepDots(step: 3),
               const SizedBox(height: 32),
-              const Icon(Icons.sms, size: 36, color: AppColors.primary),
+              const AuthBadge(emoji: '💬'),
               const SizedBox(height: 16),
-              const Text('Tasdiqlash kodi',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+              Text(loc.t('auth_otp_title'),
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               Text(
-                '${widget.phoneNumber} raqamiga 6 raqamli kod yubordik',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                '${widget.phoneNumber} ${loc.t('auth_otp_sub')}',
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 28),
               PinCodeTextField(
@@ -300,10 +345,10 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Test rejimi: SMS xizmati hali ulanmagan, kod avtomatik '
-                    "to'ldirildi. Davom etish uchun tugmani bosing.",
-                    style: TextStyle(color: AppColors.primary, fontSize: 12),
+                  child: Text(
+                    loc.t('auth_otp_test_mode'),
+                    style: const TextStyle(
+                        color: AppColors.primary, fontSize: 12),
                   ),
                 ),
               ],
@@ -321,8 +366,8 @@ class _AuthOtpScreenState extends State<AuthOtpScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : Text(
                           _secondsLeft == 0
-                              ? 'Kodni qayta yuborish'
-                              : "Kod kelmadimi? Qayta yuborish (${_formatWait(_secondsLeft)})",
+                              ? loc.t('auth_otp_resend')
+                              : '${loc.t('auth_otp_wait')} (${_formatWait(_secondsLeft)})',
                         ),
                 ),
               ),

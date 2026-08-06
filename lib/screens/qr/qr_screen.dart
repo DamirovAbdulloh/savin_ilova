@@ -1,5 +1,4 @@
 ﻿import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -9,7 +8,6 @@ import '../../core/widgets/app_animations.dart';
 import '../../core/widgets/confetti_overlay.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
-import '../../services/catalog_service.dart';
 import '../../services/wallet_service.dart';
 import '../profile/premium_info_screen.dart';
 
@@ -48,7 +46,6 @@ class _QrScreenState extends State<QrScreen> {
   bool _offline = false;
   bool _loadedOnce = false;
   bool _showSuccess = false;
-  bool _redeeming = false;
   TransactionItem? _lastRedeem;
   WalletStats? _walletStats;
 

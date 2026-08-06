@@ -143,6 +143,12 @@ const Map<String, Map<String, String>> _strings = {
     'auth_otp_wait': 'Kod kelmadimi? Qayta yuborish',
     'auth_otp_blocked': 'Vaqtincha bloklangan',
     'auth_otp_blocked_sub': "Siz 3 marta noto'g'ri kod kiritdingiz. Xavfsizlik uchun urinishlar vaqtincha to'xtatildi.",
+    'auth_otp_left': 'Qoldi',
+    'auth_otp_problem': 'Muammoga duch keldingizmi?',
+    'auth_otp_support': "Qo'llab-quvvatlash bilan bog'lanish",
+    'auth_otp_new_sent': 'Yangi kod yuborildi',
+    'auth_otp_test_mode':
+        "Test rejimi: SMS xizmati hali ulanmagan, kod avtomatik to'ldirildi. Davom etish uchun tugmani bosing.",
 
     'qr_title': 'Sizning QR kodingiz',
     'qr_subtitle': "Kassaga ko'rsating",
@@ -342,6 +348,79 @@ const Map<String, Map<String, String>> _strings = {
     'partners_new': 'YANGI',
     'partners_week': 'HAFTA TAVSIYASI',
     'partners_added': "Bu oyda qo'shildi",
+
+    // Katalogdagi kategoriya qidiruvi
+    'catalog_search_hint': 'Kategoriya qidirish',
+    'catalog_no_category': 'Bunday kategoriya topilmadi',
+
+    // Hamyon menyusi (burger)
+    'wallet_menu_title': "Nimani ko'rmoqchisiz?",
+    'wallet_chart_sub': "Kunlar bo'yicha tejash dinamikasi",
+    'wallet_history_sub': 'Barcha tashriflar va chegirmalar',
+
+    // Til tanlash ekrani
+    'lang_trilingual': 'Tilni tanlang · Выберите язык · Choose language',
+
+    // Chiqish / akkountni o'chirish oynalari
+    'logout_title': 'Hisobdan chiqasizmi?',
+    'logout_desc':
+        "Sizning ma'lumotlaringiz xavfsiz saqlanadi. Qaytib kirganda hammasi joyida bo'ladi.",
+    'logout_badge': '★ Membership: {n} kun qoldi',
+    'logout_confirm': 'Ha, chiqish',
+    'delete_title': "Akkountni o'chirmoqchimisiz?",
+    'delete_desc':
+        "Hisobingiz va barcha ma'lumotlaringiz butunlay o'chiriladi va qaytarib bo'lmaydi.",
+    'delete_confirm': "Ha, o'chirish",
+    'delete_loss_savings': "{n} so'm tejash tarixi",
+    'delete_loss_friends': "{n} ta do'st referal bonusi",
+    'delete_loss_premium': 'Premium membership ({n} kun qoldi)',
+
+    // Yordam markazi
+    'help_search_hint': 'Savolingizni qidiring...',
+    'help_chat': 'Chat',
+    'help_call': "Qo'ng'iroq",
+    'help_email': 'Email',
+    'help_faq': "KO'P SO'RALADIGAN SAVOLLAR",
+    'help_no_results': 'Savol topilmadi',
+    'help_more_title': 'Yana yordam kerakmi?',
+    'help_more_sub': 'Bizning support 24/7 ishlaydi',
+    'faq_1_q': 'Premium membership qancha turadi?',
+    'faq_1_a':
+        "Premium membership oyiga 20 000 so'm. 3 oylik obuna olib, 10% tejashingiz mumkin (54 000 so'm). 12 oylik — 25% tejash.",
+    'faq_2_q': 'QR kod qancha vaqt amal qiladi?',
+    'faq_2_a':
+        "Har bir QR kod 5 daqiqa amal qiladi, keyin xavfsizlik uchun avtomatik yangilanadi. Kassaga ko'rsatishdan oldin QR ekranini oching.",
+    'faq_3_q': "Chegirma to'lov chekida ko'rinadimi?",
+    'faq_3_a':
+        "Ha, hamkor tomonidan chegirma to'g'ridan-to'g'ri chekda hisoblanadi. Tranzaksiya tarixini Hamyon bo'limida ko'rishingiz mumkin.",
+    'faq_4_q': "Membership'ni qanday bekor qilaman?",
+    'faq_4_a':
+        "Profil → Membership holati → Uzaytirish bo'limidan boshqarishingiz mumkin. Bekor qilingandan keyin ham muddat tugagunga qadar amal qiladi.",
+    'faq_5_q': "Internet bo'lmasa QR ishlaydimi?",
+    'faq_5_a':
+        "Ha — QR ekrani oxirgi yuklangan kodni keshda saqlaydi va internet yo'q bo'lganda ham ko'rsatish mumkin, lekin yangilanish uchun internet kerak bo'ladi.",
+
+    // Foydalanish shartlari
+    'terms_date': "18-may 2026 · O'zbekcha",
+    'terms_read_full': "To'liq matnni o'qish",
+    'terms_1_t': '1. Umumiy qoidalar',
+    'terms_1_b':
+        "Savin ilovasidan foydalanish orqali siz ushbu shartlarni qabul qilasiz. Ilova foydalanuvchilarga 12+ kategoriyada chegirmalar olish imkonini beradi. Premium a'zolik oyiga 20 000 so'm.",
+    'terms_2_t': "2. A'zolik va to'lov",
+    'terms_2_b':
+        "Premium a'zolik 30 kun davom etadi. To'lov Click yoki Payme orqali amalga oshiriladi. Avtomatik yangilanish bekor qilinmaguncha ishlaydi. Bekor qilish istalgan vaqtda mumkin.",
+    'terms_3_t': '3. Chegirmalarni ishlatish',
+    'terms_3_b':
+        "Har bir QR kod 5 daqiqa amal qiladi va bir marta ishlatiladi. Soxta yoki noto'g'ri foydalanish aniqlanganda akkount bloklanadi.",
+    'terms_4_t': '4. Maxfiylik',
+    'terms_4_b':
+        "Sizning shaxsiy ma'lumotlaringiz uchinchi shaxslarga berilmaydi. Batafsil: Maxfiylik siyosati hujjatida.",
+    'terms_5_t': '5. Javobgarlik chegarasi',
+    'terms_5_b':
+        "Savin — hamkor bizneslar bilan foydalanuvchilar o'rtasidagi vositachi platforma. Xizmat sifati uchun javobgarlik tegishli biznesga tegishli.",
+    'terms_6_t': "6. Shartlarning o'zgarishi",
+    'terms_6_b':
+        "Savin ushbu shartlarni istalgan vaqtda yangilashi mumkin. Muhim o'zgarishlar haqida bildirishnoma orqali xabar beriladi.",
   },
   'ru': {
     'nav_home': 'Главная',
@@ -449,6 +528,12 @@ const Map<String, Map<String, String>> _strings = {
     'auth_otp_wait': 'Не получили код? Переотправить',
     'auth_otp_blocked': 'Временно заблокировано',
     'auth_otp_blocked_sub': 'Вы ввели неверный код 3 раза. По соображениям безопасности попытки временно приостановлены.',
+    'auth_otp_left': 'Осталось',
+    'auth_otp_problem': 'Столкнулись с проблемой?',
+    'auth_otp_support': 'Связаться с поддержкой',
+    'auth_otp_new_sent': 'Новый код отправлен',
+    'auth_otp_test_mode':
+        'Тестовый режим: SMS-сервис ещё не подключён, код подставлен автоматически. Нажмите кнопку, чтобы продолжить.',
 
     'qr_title': 'Ваш QR-код',
     'qr_subtitle': 'Покажите на кассе',
@@ -634,6 +719,73 @@ const Map<String, Map<String, String>> _strings = {
     'partners_new': 'НОВОЕ',
     'partners_week': 'РЕКОМЕНДАЦИЯ НЕДЕЛИ',
     'partners_added': 'Добавлено в этом месяце',
+
+    'catalog_search_hint': 'Поиск категории',
+    'catalog_no_category': 'Такая категория не найдена',
+
+    'wallet_menu_title': 'Что хотите посмотреть?',
+    'wallet_chart_sub': 'Динамика экономии по дням',
+    'wallet_history_sub': 'Все визиты и скидки',
+
+    'lang_trilingual': 'Tilni tanlang · Выберите язык · Choose language',
+
+    'logout_title': 'Выйти из аккаунта?',
+    'logout_desc':
+        'Ваши данные сохранятся. При следующем входе всё будет на месте.',
+    'logout_badge': '★ Подписка: осталось {n} дн.',
+    'logout_confirm': 'Да, выйти',
+    'delete_title': 'Удалить аккаунт?',
+    'delete_desc':
+        'Аккаунт и все ваши данные будут удалены безвозвратно.',
+    'delete_confirm': 'Да, удалить',
+    'delete_loss_savings': 'История экономии на {n} сум',
+    'delete_loss_friends': 'Реферальный бонус за {n} друзей',
+    'delete_loss_premium': 'Premium-подписка (осталось {n} дн.)',
+
+    'help_search_hint': 'Найдите свой вопрос...',
+    'help_chat': 'Чат',
+    'help_call': 'Звонок',
+    'help_email': 'Email',
+    'help_faq': 'ЧАСТО ЗАДАВАЕМЫЕ ВОПРОСЫ',
+    'help_no_results': 'Вопрос не найден',
+    'help_more_title': 'Нужна ещё помощь?',
+    'help_more_sub': 'Наша поддержка работает 24/7',
+    'faq_1_q': 'Сколько стоит Premium-подписка?',
+    'faq_1_a':
+        'Premium стоит 20 000 сум в месяц. При подписке на 3 месяца вы экономите 10% (54 000 сум), на 12 месяцев — 25%.',
+    'faq_2_q': 'Сколько действует QR-код?',
+    'faq_2_a':
+        'Каждый QR-код действует 5 минут, затем автоматически обновляется в целях безопасности. Откройте экран QR прямо перед показом кассиру.',
+    'faq_3_q': 'Отображается ли скидка в чеке?',
+    'faq_3_a':
+        'Да, партнёр рассчитывает скидку прямо в чеке. Историю транзакций можно посмотреть в разделе «Кошелёк».',
+    'faq_4_q': 'Как отменить подписку?',
+    'faq_4_a':
+        'Профиль → Статус подписки → Продление. После отмены подписка действует до конца оплаченного срока.',
+    'faq_5_q': 'Работает ли QR без интернета?',
+    'faq_5_a':
+        'Да — экран QR сохраняет последний загруженный код в кэше и показывает его без интернета, но для обновления кода интернет нужен.',
+
+    'terms_date': '18 мая 2026 · Русский',
+    'terms_read_full': 'Читать полный текст',
+    'terms_1_t': '1. Общие положения',
+    'terms_1_b':
+        'Используя приложение Savin, вы принимаете настоящие условия. Приложение даёт доступ к скидкам в 12+ категориях. Premium-подписка стоит 20 000 сум в месяц.',
+    'terms_2_t': '2. Подписка и оплата',
+    'terms_2_b':
+        'Premium действует 30 дней. Оплата через Click или Payme. Автопродление работает до отмены. Отменить можно в любой момент.',
+    'terms_3_t': '3. Использование скидок',
+    'terms_3_b':
+        'Каждый QR-код действует 5 минут и используется один раз. При выявлении мошенничества аккаунт блокируется.',
+    'terms_4_t': '4. Конфиденциальность',
+    'terms_4_b':
+        'Ваши персональные данные не передаются третьим лицам. Подробнее — в Политике конфиденциальности.',
+    'terms_5_t': '5. Ограничение ответственности',
+    'terms_5_b':
+        'Savin — платформа-посредник между партнёрами и пользователями. За качество услуг отвечает соответствующий бизнес.',
+    'terms_6_t': '6. Изменение условий',
+    'terms_6_b':
+        'Savin может обновить эти условия в любое время. О важных изменениях мы сообщим через уведомления.',
   },
   'en': {
     'nav_home': 'Home',
@@ -741,6 +893,12 @@ const Map<String, Map<String, String>> _strings = {
     'auth_otp_wait': 'Didn\'t get the code? Resend',
     'auth_otp_blocked': 'Temporarily blocked',
     'auth_otp_blocked_sub': 'You entered the wrong code 3 times. For security reasons, attempts are temporarily suspended.',
+    'auth_otp_left': 'Time left',
+    'auth_otp_problem': 'Running into a problem?',
+    'auth_otp_support': 'Contact support',
+    'auth_otp_new_sent': 'A new code has been sent',
+    'auth_otp_test_mode':
+        'Test mode: the SMS service is not connected yet, so the code was filled in automatically. Tap the button to continue.',
 
     'qr_title': 'Your QR code',
     'qr_subtitle': 'Show at checkout',
@@ -923,5 +1081,72 @@ const Map<String, Map<String, String>> _strings = {
     'partners_new': 'NEW',
     'partners_week': 'PICK OF THE WEEK',
     'partners_added': 'Added this month',
+
+    'catalog_search_hint': 'Search a category',
+    'catalog_no_category': 'No such category found',
+
+    'wallet_menu_title': 'What would you like to see?',
+    'wallet_chart_sub': 'Daily savings trend',
+    'wallet_history_sub': 'All visits and discounts',
+
+    'lang_trilingual': 'Tilni tanlang · Выберите язык · Choose language',
+
+    'logout_title': 'Log out of your account?',
+    'logout_desc':
+        'Your data stays safe. Everything will be right where you left it when you come back.',
+    'logout_badge': '★ Membership: {n} days left',
+    'logout_confirm': 'Yes, log out',
+    'delete_title': 'Delete your account?',
+    'delete_desc':
+        'Your account and all your data will be permanently deleted and cannot be restored.',
+    'delete_confirm': 'Yes, delete',
+    'delete_loss_savings': '{n} UZS of savings history',
+    'delete_loss_friends': 'Referral bonus for {n} friends',
+    'delete_loss_premium': 'Premium membership ({n} days left)',
+
+    'help_search_hint': 'Search your question...',
+    'help_chat': 'Chat',
+    'help_call': 'Call',
+    'help_email': 'Email',
+    'help_faq': 'FREQUENTLY ASKED QUESTIONS',
+    'help_no_results': 'No question found',
+    'help_more_title': 'Need more help?',
+    'help_more_sub': 'Our support works 24/7',
+    'faq_1_q': 'How much does Premium membership cost?',
+    'faq_1_a':
+        'Premium costs 20,000 UZS per month. A 3-month plan saves you 10% (54,000 UZS); a 12-month plan saves 25%.',
+    'faq_2_q': 'How long is a QR code valid?',
+    'faq_2_a':
+        'Each QR code is valid for 5 minutes, then refreshes automatically for security. Open the QR screen right before showing it to the cashier.',
+    'faq_3_q': 'Does the discount appear on the receipt?',
+    'faq_3_a':
+        'Yes, the partner applies the discount directly on the receipt. You can review your transactions in the Wallet section.',
+    'faq_4_q': 'How do I cancel my membership?',
+    'faq_4_a':
+        'Profile → Membership status → Extend. After cancelling, it stays active until the paid period ends.',
+    'faq_5_q': 'Does the QR work without internet?',
+    'faq_5_a':
+        'Yes — the QR screen caches the last loaded code and can show it offline, but an internet connection is needed to refresh it.',
+
+    'terms_date': '18 May 2026 · English',
+    'terms_read_full': 'Read the full text',
+    'terms_1_t': '1. General terms',
+    'terms_1_b':
+        'By using the Savin app you accept these terms. The app gives you discounts across 12+ categories. Premium membership costs 20,000 UZS per month.',
+    'terms_2_t': '2. Membership and payment',
+    'terms_2_b':
+        'Premium lasts 30 days. Payment goes through Click or Payme. Auto-renewal runs until cancelled. You can cancel at any time.',
+    'terms_3_t': '3. Using discounts',
+    'terms_3_b':
+        'Each QR code is valid for 5 minutes and can be used once. Accounts are blocked if fraudulent or improper use is detected.',
+    'terms_4_t': '4. Privacy',
+    'terms_4_b':
+        'Your personal data is not shared with third parties. See the Privacy Policy for details.',
+    'terms_5_t': '5. Limitation of liability',
+    'terms_5_b':
+        'Savin is an intermediary platform between partner businesses and users. The business itself is responsible for service quality.',
+    'terms_6_t': '6. Changes to these terms',
+    'terms_6_b':
+        'Savin may update these terms at any time. We will notify you about important changes.',
   },
 };

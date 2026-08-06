@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
+import '../../core/widgets/auth_badge.dart';
 import '../../services/auth_service.dart';
 import 'auth_otp_screen.dart';
 
@@ -76,26 +77,9 @@ class _AuthPhoneScreenState extends State<AuthPhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: List.generate(3, (i) {
-                  return Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeOut,
-                      margin: const EdgeInsets.only(right: 6),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: i <= 1 ? AppColors.primary : AppColors.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+              const AuthStepDots(step: 2),
               const SizedBox(height: 32),
-              const FadeSlideIn(
-                child: Icon(Icons.phone_iphone, size: 36, color: AppColors.primary),
-              ),
+              const FadeSlideIn(child: AuthBadge(icon: Icons.phone_iphone)),
               const SizedBox(height: 16),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),
@@ -117,12 +101,27 @@ class _AuthPhoneScreenState extends State<AuthPhoneScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   maxLength: 9,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
+                  // Xato bo'lganda maydon dizayndagidek qizil ramkaga o'tadi
+                  onChanged: (_) => setState(() => _error = null),
+                  decoration: InputDecoration(
                     // Dizayn: bayroq + kod (🇺🇿 +998)
                     prefixText: '🇺🇿 +998  ',
                     hintText: '00 000 00 00',
                     counterText: '',
+                    enabledBorder: _error == null
+                        ? null
+                        : OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: AppColors.danger),
+                          ),
+                    focusedBorder: _error == null
+                        ? null
+                        : OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: AppColors.danger, width: 1.5),
+                          ),
                   ),
                 ),
               ),

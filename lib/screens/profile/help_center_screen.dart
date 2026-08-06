@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/i18n/app_strings.dart';
 import '../../core/i18n/locale_builder.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
@@ -14,29 +15,24 @@ class HelpCenterScreen extends StatefulWidget {
 
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
   int? _expanded;
+  String _query = '';
 
-  static const _faqs = [
-    (
-      q: 'Premium membership qancha turadi?',
-      a: 'Premium membership oyiga 20 000 so\'m. 3 oylik obuna olib, 10% tejashingiz mumkin (54 000 so\'m). 12 oylik — 25% tejash.',
-    ),
-    (
-      q: 'QR kod qancha vaqt amal qiladi?',
-      a: 'Har bir QR kod 5 daqiqa amal qiladi, keyin xavfsizlik uchun avtomatik yangilanadi. Kassaga ko\'rsatishdan oldin QR ekranini oching.',
-    ),
-    (
-      q: 'Chegirma to\'lov chekida ko\'rinadimi?',
-      a: 'Ha, hamkor tomonidan chegirma to\'g\'ridan-to\'g\'ri chekda hisoblanadi. Tranzaksiya tarixini Hamyon bo\'limida ko\'rishingiz mumkin.',
-    ),
-    (
-      q: 'Membership\'ni qanday bekor qilaman?',
-      a: 'Profil → Membership holati → Uzaytirish bo\'limidan boshqarishingiz mumkin. Bekor qilingandan keyin ham muddat tugagunga qadar amal qiladi.',
-    ),
-    (
-      q: 'Internet bo\'lmasa QR ishlaydimi?',
-      a: 'Ha — QR ekrani oxirgi yuklangan kodni keshda saqlaydi va internet yo\'q bo\'lganda ham ko\'rsatish mumkin, lekin yangilanish uchun internet kerak bo\'ladi.',
-    ),
-  ];
+  /// Savol-javoblar soni. Matnlar `app_strings.dart` da uch tilda
+  /// (`faq_1_q` / `faq_1_a` ...) — ilgari ular shu yerda faqat o'zbekcha
+  /// yozilgan edi va til almashtirilganda o'zgarmasdi.
+  static const _faqCount = 5;
+
+  /// Qidiruvga mos savollar (savol ham, javob ham tekshiriladi).
+  List<int> get _visibleFaqs {
+    final loc = AppLocale.instance;
+    final q = _query.trim().toLowerCase();
+    final all = List.generate(_faqCount, (i) => i + 1);
+    if (q.isEmpty) return all;
+    return all.where((n) {
+      final text = '${loc.t('faq_${n}_q')} ${loc.t('faq_${n}_a')}'.toLowerCase();
+      return text.contains(q);
+    }).toList();
+  }
 
   Future<void> _open(String url) async {
     final uri = Uri.parse(url);
@@ -45,7 +41,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Havolani ochib bo\'lmadi')),
+          SnackBar(content: Text(AppLocale.instance.t('help_link_error'))),
         );
       }
     }
@@ -60,11 +56,15 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const FadeSlideIn(
+            FadeSlideIn(
               child: TextField(
+                onChanged: (v) => setState(() {
+                  _query = v;
+                  _expanded = null;
+                }),
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Savolingizni qidiring...',
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: loc.t('help_search_hint'),
                 ),
               ),
             ),
@@ -76,7 +76,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   Expanded(
                     child: _ContactTile(
                         icon: Icons.chat_bubble_outline,
-                        label: 'Chat',
+                        label: loc.t('help_chat'),
                         color: AppColors.primary,
                         onTap: () => _open('https://t.me/savinapp_support')),
                   ),
@@ -84,7 +84,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   Expanded(
                     child: _ContactTile(
                         icon: Icons.call_outlined,
-                        label: "Qo'ng'iroq",
+                        label: loc.t('help_call'),
                         color: const Color(0xFF3B82F6),
                         onTap: () => _open('tel:+998781505050')),
                   ),
@@ -92,7 +92,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   Expanded(
                     child: _ContactTile(
                         icon: Icons.email_outlined,
-                        label: 'Email',
+                        label: loc.t('help_email'),
                         color: const Color(0xFFF59E0B),
                         onTap: () => _open('mailto:hello@savin.uz')),
                   ),
@@ -100,17 +100,26 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ),
             ),
             const SizedBox(height: 22),
-            const Text("KO'P SO'RALADIGAN SAVOLLAR",
-                style: TextStyle(
+            Text(loc.t('help_faq'),
+                style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                     letterSpacing: 0.5)),
             const SizedBox(height: 8),
-            ...List.generate(_faqs.length, (i) {
-              final faq = _faqs[i];
-              final open = _expanded == i;
+            if (_visibleFaqs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(loc.t('help_no_results'),
+                      style: const TextStyle(color: AppColors.textSecondary)),
+                ),
+              ),
+            ...List.generate(_visibleFaqs.length, (i) {
+              final n = _visibleFaqs[i];
+              final open = _expanded == n;
               return FadeSlideIn(
+                key: ValueKey('faq$n'),
                 delay: Duration(milliseconds: 100 + i * 50),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
@@ -121,11 +130,12 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   child: Column(
                     children: [
                       ListTile(
-                        title: Text(faq.q,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                        title: Text(loc.t('faq_${n}_q'),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13.5)),
                         trailing: Icon(open ? Icons.remove : Icons.add,
                             color: AppColors.primary),
-                        onTap: () => setState(() => _expanded = open ? null : i),
+                        onTap: () => setState(() => _expanded = open ? null : n),
                       ),
                       AnimatedSize(
                         duration: const Duration(milliseconds: 220),
@@ -134,9 +144,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: Text(faq.a,
+                                  child: Text(loc.t('faq_${n}_a'),
                                       style: const TextStyle(
-                                          color: AppColors.textSecondary, fontSize: 12.5, height: 1.4)),
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12.5,
+                                          height: 1.4)),
                                 ),
                               )
                             : const SizedBox.shrink(),
@@ -157,15 +169,18 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     color: AppColors.primaryDark,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Text('👋', style: TextStyle(fontSize: 20)),
-                      SizedBox(width: 10),
+                      const Text('👋', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: Text('Yana yordam kerakmi?\nBizning support 24/7 ishlaydi',
-                            style: TextStyle(color: Colors.white, fontSize: 12.5)),
+                        child: Text(
+                            '${loc.t('help_more_title')}\n${loc.t('help_more_sub')}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12.5)),
                       ),
-                      Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                      const Icon(Icons.arrow_forward,
+                          color: Colors.white, size: 18),
                     ],
                   ),
                 ),

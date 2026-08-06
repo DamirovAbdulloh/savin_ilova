@@ -26,6 +26,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   String? _selectedCategoryId;
   bool _loadingBiz = false;
 
+  // Dizayndagi "Kategoriya qidirish" maydoni — kategoriya to'rini filtrlaydi
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  List<CategoryItem> get _visibleCategories {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return _categories;
+    return _categories.where((c) => c.name.toLowerCase().contains(q)).toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +46,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   @override
   void dispose() {
     AppLocale.instance.removeListener(_onLocaleChanged);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -89,7 +100,55 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             child: Text(loc.t('catalog_title'),
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           ),
+          const SizedBox(height: 12),
+          // Dizayndagi "Kategoriya qidirish" maydoni
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 40),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search, size: 20),
+                hintText: loc.t('catalog_search_hint'),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => setState(() {
+                          _searchController.clear();
+                          _query = '';
+                        }),
+                      ),
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
+          if (_visibleCategories.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28),
+              child: Column(
+                children: [
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: const BoxDecoration(
+                        color: AppColors.primaryLight, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.search_off,
+                        size: 36, color: AppColors.primary),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(loc.t('catalog_no_category'),
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text(loc.t('search_empty_sub'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 12.5, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -99,9 +158,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               crossAxisSpacing: 10,
               childAspectRatio: 0.95,
             ),
-            itemCount: _categories.length,
+            itemCount: _visibleCategories.length,
             itemBuilder: (context, i) {
-              final c = _categories[i];
+              final c = _visibleCategories[i];
               final selected = _selectedCategoryId == c.id;
               return FadeSlideIn(
                 delay: Duration(milliseconds: 60 + (i.clamp(0, 8)) * 50),

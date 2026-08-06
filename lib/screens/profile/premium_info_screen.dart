@@ -79,7 +79,6 @@ class _PremiumInfoScreenState extends State<PremiumInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocale.instance;
     final isPremium = widget.user?.isPremium == true;
 
     return LocaleBuilder(

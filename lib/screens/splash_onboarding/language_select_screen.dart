@@ -30,17 +30,34 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Dizayn: logo va sarlavha markazda, ostida uch tildagi qator
               const SizedBox(height: 32),
               const FadeSlideIn(
-                child: SavinLogo(height: 34),
+                child: Center(child: SavinLogo(height: 34)),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 28),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 100),
-                child: Text(AppLocale.instance.t('lang_subtitle'),
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(AppLocale.instance.t('lang_subtitle'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w700)),
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 6),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 140),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(AppLocale.instance.t('lang_trilingual'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 12.5, color: AppColors.textSecondary)),
+                ),
+              ),
+              const SizedBox(height: 22),
               ...List.generate(_languages.length, (idx) {
                 final lang = _languages[idx];
                 final isSelected = _selected == lang['code'];

@@ -7,38 +7,10 @@ import '../../core/widgets/app_animations.dart';
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
 
-  static const _sections = [
-    (
-      title: '1. Umumiy qoidalar',
-      body:
-          "Savin ilovasidan foydalanish orqali siz ushbu shartlarni qabul qilasiz. Ilova foydalanuvchilarga 12+ kategoriyada chegirmalar olish imkonini beradi. Premium a'zolik oyiga 20 000 so'm.",
-    ),
-    (
-      title: "2. A'zolik va to'lov",
-      body:
-          "Premium a'zolik 30 kun davom etadi. To'lov Click yoki Payme orqali amalga oshiriladi. Avtomatik yangilanish bekor qilinmaguncha ishlaydi. Bekor qilish istalgan vaqtda mumkin.",
-    ),
-    (
-      title: '3. Chegirmalarni ishlatish',
-      body:
-          "Har bir QR kod 5 daqiqa amal qiladi va bir marta ishlatiladi. Soxta yoki noto'g'ri foydalanish aniqlanganda akkount bloklanadi.",
-    ),
-    (
-      title: '4. Maxfiylik',
-      body:
-          "Sizning shaxsiy ma'lumotlaringiz uchinchi shaxslarga berilmaydi. Batafsil: Maxfiylik siyosati hujjatida.",
-    ),
-    (
-      title: '5. Javobgarlik chegarasi',
-      body:
-          "Savin — hamkor bizneslar bilan foydalanuvchilar o'rtasidagi vositachi platforma. Xizmat sifati uchun javobgarlik tegishli biznesga tegishli.",
-    ),
-    (
-      title: "6. Shartlarning o'zgarishi",
-      body:
-          "Savin ushbu shartlarni istalgan vaqtda yangilashi mumkin. Muhim o'zgarishlar haqida bildirishnoma orqali xabar beriladi.",
-    ),
-  ];
+  /// Bandlar soni — matnlar `app_strings.dart` da uch tilda saqlanadi
+  /// (`terms_1_t`/`terms_1_b` ... ). Ilgari ular shu yerda faqat o'zbekcha
+  /// yozib qo'yilgan edi va til almashtirilganda o'zgarmasdi.
+  static const _sectionCount = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -60,17 +32,19 @@ class TermsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(loc.t('terms_version'),
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    SizedBox(height: 2),
-                    Text("18-may 2026 · O'zbekcha",
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                    const SizedBox(height: 2),
+                    Text(loc.t('terms_date'),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 11.5)),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 18),
-            ...List.generate(_sections.length, (i) {
-              final s = _sections[i];
+            ...List.generate(_sectionCount, (i) {
+              final n = i + 1;
               return FadeSlideIn(
                 delay: Duration(milliseconds: 60 + i * 50),
                 child: Padding(
@@ -78,27 +52,30 @@ class TermsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s.title,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                      const SizedBox(height: 6),
-                      Text(s.body,
+                      Text(loc.t('terms_${n}_t'),
                           style: const TextStyle(
-                              color: AppColors.textSecondary, fontSize: 13, height: 1.5)),
+                              fontWeight: FontWeight.w700, fontSize: 15)),
+                      const SizedBox(height: 6),
+                      Text(loc.t('terms_${n}_b'),
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                              height: 1.5)),
                     ],
                   ),
                 ),
               );
             }),
             FadeSlideIn(
-              delay: Duration(milliseconds: 60 + _sections.length * 50),
+              delay: Duration(milliseconds: 60 + _sectionCount * 50),
               child: TextButton(
                 onPressed: () {},
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("To'liq matnni o'qish"),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward, size: 16),
+                    Text(loc.t('terms_read_full')),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward, size: 16),
                   ],
                 ),
               ),

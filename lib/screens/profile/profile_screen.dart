@@ -6,6 +6,8 @@ import '../../core/widgets/confirm_sheets.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_prefs.dart';
+import '../../services/referral_service.dart';
+import '../../services/wallet_service.dart';
 import '../catalog/favorites_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../splash_onboarding/language_select_screen.dart';
@@ -53,6 +55,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Akkountni o'chirish oynasida "nima yo'qotasiz" ro'yxati uchun —
+  /// HAQIQIY tejash summasi (ilgari bu yerda soxta "247 500" yozilgan edi).
+  int _savedAllTime = 0;
+
   Future<void> _load() async {
     try {
       final user = await AuthService.instance.fetchMe();
@@ -64,6 +70,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+    // Ixtiyoriy — bo'lmasa 0 qoladi
+    try {
+      final stats = await WalletService.instance.fetchStats();
+      if (mounted) setState(() => _savedAllTime = stats.savedAllTime);
+    } catch (_) {}
+    ReferralService.instance.load();
+  }
+
+  String _fmtSum(int v) {
+    final s = v.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      buf.write(s[i]);
+      final left = s.length - i - 1;
+      if (left > 0 && left % 3 == 0) buf.write(' ');
+    }
+    return buf.toString();
   }
 
   int? get _membershipDaysLeft {
@@ -402,9 +425,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context,
                     onConfirm: _confirmDelete,
                     losses: [
-                      "247 500 so'm tejash tarixi",
-                      "1 do'st referal bonusi",
-                      if (isPremium) 'Premium membership (${daysLeft ?? 0} kun qoldi)',
+                      if (_savedAllTime > 0)
+                        loc
+                            .t('delete_loss_savings')
+                            .replaceAll('{n}', _fmtSum(_savedAllTime)),
+                      if (ReferralService.instance.activeCount > 0)
+                        loc.t('delete_loss_friends').replaceAll(
+                            '{n}', '${ReferralService.instance.activeCount}'),
+                      if (isPremium)
+                        loc
+                            .t('delete_loss_premium')
+                            .replaceAll('{n}', '${daysLeft ?? 0}'),
                     ],
                   ),
                   child: Text(loc.t('profile_delete'),

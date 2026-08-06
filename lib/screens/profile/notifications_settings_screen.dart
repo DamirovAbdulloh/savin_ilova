@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/i18n/locale_builder.dart';
-import '../../core/i18n/app_strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/app_animations.dart';
 import '../../services/notification_prefs.dart';
@@ -18,7 +17,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocale.instance;
     final master = _prefs.masterEnabled;
     return LocaleBuilder(
       builder: (context, loc) => Scaffold(

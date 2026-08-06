@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import '../i18n/app_strings.dart';
 import '../theme.dart';
 
 /// Ilova bo'ylab ishlatiladigan tasdiqlash bottom-sheet'lari
 /// (hisobdan chiqish, akkountni o'chirish va h.k.) — Figma dizayniga mos.
+///
+/// Matnlar `app_strings.dart` dan olinadi — ilgari o'zbekcha yozib
+/// qo'yilgani uchun til almashtirilganda o'zgarmasdi.
 
 Future<void> showLogoutSheet(
   BuildContext context, {
   required VoidCallback onConfirm,
   int? membershipDaysLeft,
 }) {
+  final loc = AppLocale.instance;
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -16,15 +21,14 @@ Future<void> showLogoutSheet(
     builder: (context) => _ConfirmSheet(
       emoji: '👋',
       iconBg: AppColors.primaryLight,
-      title: 'Hisobdan chiqasizmi?',
-      description:
-          "Sizning ma'lumotlaringiz xavfsiz saqlanadi. Qaytib kirganda hammasi joyida bo'ladi.",
+      title: loc.t('logout_title'),
+      description: loc.t('logout_desc'),
       badge: membershipDaysLeft != null
-          ? '★ Membership: $membershipDaysLeft kun qoldi'
+          ? loc.t('logout_badge').replaceAll('{n}', '$membershipDaysLeft')
           : null,
-      confirmLabel: 'Ha, chiqish',
+      confirmLabel: loc.t('logout_confirm'),
       confirmColor: AppColors.primary,
-      cancelLabel: 'Bekor qilish',
+      cancelLabel: loc.t('common_cancel'),
       onConfirm: onConfirm,
     ),
   );
@@ -35,6 +39,7 @@ Future<void> showDeleteAccountSheet(
   required VoidCallback onConfirm,
   required List<String> losses,
 }) {
+  final loc = AppLocale.instance;
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -43,13 +48,12 @@ Future<void> showDeleteAccountSheet(
       icon: Icons.warning_rounded,
       iconBg: AppColors.danger.withValues(alpha: 0.12),
       iconColor: AppColors.danger,
-      title: "Akkountni o'chirmoqchimisiz?",
-      description:
-          "Hisobingiz va barcha ma'lumotlaringiz butunlay o'chiriladi va qaytarib bo'lmaydi.",
+      title: loc.t('delete_title'),
+      description: loc.t('delete_desc'),
       losses: losses,
-      confirmLabel: "Ha, o'chirish",
+      confirmLabel: loc.t('delete_confirm'),
       confirmColor: AppColors.danger,
-      cancelLabel: 'Bekor qilish',
+      cancelLabel: loc.t('common_cancel'),
       onConfirm: onConfirm,
     ),
   );
